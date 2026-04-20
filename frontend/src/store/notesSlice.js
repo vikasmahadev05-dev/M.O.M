@@ -29,6 +29,56 @@ export const deleteNote = createAsyncThunk('notes/deleteNote', async (id) => {
   return id;
 });
 
+export const duplicateNote = createAsyncThunk('notes/duplicateNote', async (note) => {
+  const { _id, createdAt, updatedAt, ...rest } = note;
+  const response = await axios.post(API_URL, {
+    ...rest,
+    title: `${rest.title} (Copy)`
+  });
+  return response.data;
+});
+
+export const linkNotes = createAsyncThunk('notes/linkNotes', async ({ noteId, targetId, reason = '' }, { dispatch }) => {
+  const response = await axios.post(`${API_URL}/link`, { noteId, targetId, reason });
+  dispatch(fetchNotes()); // Refresh all notes to get updated links
+  return response.data;
+});
+
+export const unlinkNotes = createAsyncThunk('notes/unlinkNotes', async ({ noteId, targetId }, { dispatch }) => {
+  const response = await axios.post(`${API_URL}/unlink`, { noteId, targetId });
+  dispatch(fetchNotes()); // Refresh data
+  return response.data;
+});
+
+export const updateNotePosition = createAsyncThunk('notes/updateNotePosition', async ({ id, fx, fy }) => {
+  const response = await axios.put(`${API_URL}/${id}`, { fx, fy });
+  return response.data;
+});
+
+export const clearAllGraphPins = createAsyncThunk('notes/clearAllGraphPins', async () => {
+  const response = await axios.post(`${API_URL}/graph/clear-pins`);
+  return response.data;
+});
+
+export const uploadAttachment = createAsyncThunk('notes/uploadAttachment', async ({ noteId, file }) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  // 1. Upload file to get metadata
+  const uploadRes = await axios.post(`${API_URL}/upload`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  
+  // 2. Attach metadata to note
+  const attachRes = await axios.post(`${API_URL}/${noteId}/attach`, uploadRes.data);
+  return { noteId, note: attachRes.data };
+});
+
+export const removeAttachment = createAsyncThunk('notes/removeAttachment', async ({ noteId, attachmentId }) => {
+  await axios.delete(`${API_URL}/${noteId}/attachments/${attachmentId}`);
+  return { noteId, attachmentId };
+});
+
 const initialState = {
   items: [],
   currentNoteId: null, // The note currently being edited
@@ -106,6 +156,34 @@ const notesSlice = createSlice({
         state.items = state.items.filter(note => note._id !== action.payload);
         if (state.currentNoteId === action.payload) {
           state.currentNoteId = state.items.length > 0 ? state.items[0]._id : null;
+        }
+      })
+      .addCase(duplicateNote.fulfilled, (state, action) => {
+        state.items.unshift(action.payload);
+        state.currentNoteId = action.payload._id;
+      })
+      .addCase(linkNotes.fulfilled, (state) => {
+        state.saveStatus = 'saved';
+      })
+      .addCase(unlinkNotes.fulfilled, (state) => {
+        state.saveStatus = 'saved';
+      })
+      .addCase(uploadAttachment.pending, (state) => {
+        state.saveStatus = 'saving';
+      })
+      .addCase(uploadAttachment.fulfilled, (state, action) => {
+        state.saveStatus = 'saved';
+        const index = state.items.findIndex(note => note._id === action.payload.noteId);
+        if (index !== -1) {
+          state.items[index] = action.payload.note;
+        }
+      })
+      .addCase(removeAttachment.fulfilled, (state, action) => {
+        const index = state.items.findIndex(note => note._id === action.payload.noteId);
+        if (index !== -1) {
+          state.items[index].attachments = state.items[index].attachments.filter(
+            a => a._id !== action.payload.attachmentId
+          );
         }
       });
   },

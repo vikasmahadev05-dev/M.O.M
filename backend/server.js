@@ -10,34 +10,47 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static('uploads'));
 
 // MongoDB Connection
 const MONGODB_URI = process.env.mongo_uri || process.env.MONGODB_URI;
-mongoose.connect(MONGODB_URI)
-.then(async () => {
-    console.log('MongoDB connected successfully');
-    
-    // Seed default tags if none exist
-    const Tag = require('./models/Tag');
-    const defaultTags = ['#exam', '#meeting', '#idea', '#urgent', '#personal'];
-    
-    for (const tagName of defaultTags) {
-        const exists = await Tag.findOne({ name: tagName });
-        if (!exists) {
-            await Tag.create({ name: tagName, isDefault: true });
+
+if (!MONGODB_URI) {
+    console.error('❌ MONGODB_URI is not defined in environment variables!');
+} else {
+    console.log('Connecting to MongoDB...');
+    mongoose.connect(MONGODB_URI)
+    .then(async () => {
+        console.log(`MongoDB Connected Successfully to: ${mongoose.connection.name} ✅`);
+        // Seed default tags if none exist
+        const Tag = require('./models/Tag');
+        const defaultTags = ['#exam', '#meeting', '#idea', '#urgent', '#personal'];
+        
+        for (const tagName of defaultTags) {
+            const exists = await Tag.findOne({ name: tagName });
+            if (!exists) {
+                await Tag.create({ name: tagName, isDefault: true });
+            }
         }
-    }
-})
-.catch((err) => console.error('MongoDB connection error:', err));
+    })
+    .catch((err) => {
+        console.error('❌ MongoDB connection error:', err.message);
+        console.error('Full error details:', err);
+    });
+}
 
 // Routes
 const noteRoutes = require('./routes/noteRoutes');
 const folderRoutes = require('./routes/folderRoutes');
 const tagRoutes = require('./routes/tagRoutes');
+const aiRoutes = require('./routes/aiRoutes');
+const taskRoutes = require('./routes/taskRoutes');
 
 app.use('/api/notes', noteRoutes);
 app.use('/api/folders', folderRoutes);
 app.use('/api/tags', tagRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/api/tasks', taskRoutes);
 
 /**
  * GET /api/quote

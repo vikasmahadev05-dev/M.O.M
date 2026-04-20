@@ -8,17 +8,21 @@
   --font-outfit: 'Outfit', sans-serif;
   
   /* Soft Pastel Palette */
+  /* Fluid Container Spacing */
+  --container-px: 2rem;
+  @media (max-width: 768px) {
+    --container-px: 1rem;
+  }
+  
+  --pastel-blue: #eef2ff;
+  --pastel-indigo: #e0e7ff;
+  --pastel-lavender: #f5f3ff;
+  --pastel-mint: #f0fdf4;
+  --pastel-peach: #fff7ed;
+  --pastel-rose: #fff1f2;
+  
   --bg-primary: #f8fafc;
-  --bg-secondary: #ffffff;
-  --sidebar-bg: #fdfdfd;
-  
-  --pastel-blue: #e0f2fe;
-  --pastel-purple: #f3e8ff;
-  --pastel-green: #dcfce7;
-  --pastel-pink: #fce7f3;
-  --pastel-orange: #ffedd5;
-  
-  --text-main: #1e293b;
+  --text-main: #0f172a;
   --text-muted: #64748b;
   --accent: #6366f1;
   --border: #f1f5f9;
@@ -64,4 +68,252 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  /* TipTap Specific Styling */
+  .ProseMirror {
+    outline: none !important;
+    @apply p-8 md:p-12;
+  }
+
+  .ProseMirror p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    float: left;
+    color: #adb5bd;
+    pointer-events: none;
+    height: 0;
+  }
+
+  /* Task List Styling */
+  ul[data-type="taskList"] {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0;
+  }
+  
+  .ProseMirror h1 {
+    @apply text-3xl font-black text-slate-800 mb-6 mt-8 !important;
+  }
+  
+  .ProseMirror h2 {
+    @apply text-xl font-bold text-slate-700 mb-4 mt-6 !important;
+  }
+  
+  /* Standard List Styling */
+  .ProseMirror ul {
+    list-style-type: disc !important;
+    padding-left: 2rem !important;
+    margin: 1rem 0 !important;
+  }
+  
+  .ProseMirror ol {
+    list-style-type: decimal !important;
+    padding-left: 2rem !important;
+    margin: 1rem 0 !important;
+  }
+  
+  .ProseMirror li {
+    margin-bottom: 0.5rem !important;
+    display: list-item !important;
+  }
+
+  ul[data-type="taskList"] li {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+  }
+
+  .smart-action-btn {
+    animation: bounce-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  @keyframes pulse-slow {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.1); }
+  }
+
+  .animate-pulse-slow {
+    animation: pulse-slow 3s infinite ease-in-out;
+  }
+}
+
+/* --- Inline Smart Detection (High Specificity) --- */
+.ProseMirror .smart-task {
+  background: rgba(254, 243, 199, 0.6) !important; /* Brighter Soft Yellow */
+  border-left: 5px solid #D97706 !important;
+  padding-left: 12px !important;
+  border-radius: 0 6px 6px 0 !important;
+  transition: all 0.2s ease !important;
+  margin: 4px 0 !important;
+  display: block !important;
+}
+
+.ProseMirror .smart-task:hover {
+  background: rgba(254, 243, 199, 0.8) !important;
+}
+
+.ProseMirror .smart-important {
+  background: rgba(255, 228, 230, 0.5) !important;
+  font-weight: 700 !important;
+  padding: 4px 8px !important;
+  border-radius: 6px !important;
+  color: #9F1239 !important;
+  display: inline-block !important;
+  margin: 2px 0 !important;
+}
+
+.rich-text-editor-container {
+  overflow: visible !important;
+}
+
+/* Inline Widget Styles */
+.smart-widget-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: #1e293b;
+  color: white;
+  border-radius: 6px;
+  margin-left: 8px; /* Tight "word space" gap */
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+  vertical-align: middle;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.smart-widget-btn:hover {
+  background: #000000;
+  transform: scale(1.1);
+}
+
+.smart-widget-btn.success {
+  background: #22c55e !important;
+  color: white !important;
+  font-size: 10px;
+  font-weight: bold;
+}
+
+
+@layer components {
+  ul[data-type="taskList"] li > label {
+    flex: 0 0 auto;
+    user-select: none;
+    margin-right: 0.75rem;
+    margin-top: 0.25rem;
+  }
+
+  ul[data-type="taskList"] li > div {
+    flex: 1 1 auto;
+  }
+
+  ul[data-type="taskList"] input[type="checkbox"] {
+    cursor: pointer;
+    width: 1.25rem;
+    height: 1.25rem;
+    accent-color: var(--accent);
+  }
+
+  /* Code Block Styling */
+  .ProseMirror pre {
+    background: #1e293b;
+    color: #f8fafc;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    margin: 1.5rem 0;
+  }
+
+  .ProseMirror code {
+    background: none;
+    color: inherit;
+    font-size: 0.85rem;
+    padding: 0;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #cbd5e1;
+  }
+}
+
+/* --- Blueprint Attachment Styles --- */
+.attachments-container {
+  margin-top: 20px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-bottom: 20px;
+}
+
+.attachment-card {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.attachment-card img {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  border: 4px solid white;
+  transition: transform 0.3s ease;
+}
+
+.attachment-card img:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.file-card {
+  width: 120px;
+  height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+  padding: 10px;
+  border: 1px solid #f1f5f9;
+  color: #64748b;
+}
+
+.attachment-remove-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 20px;
+  height: 20px;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+  border: 2px solid white;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.attachment-card:hover .attachment-remove-btn {
+  opacity: 1;
 }

@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchTasks } from '../store/tasksSlice';
 import { 
   CheckCircle2, 
   Clock, 
@@ -23,20 +25,25 @@ const StatCard = ({ title, value, color, icon }) => (
 );
 
 const Dashboard = () => {
-  const tasks = [
-    { title: 'Finalize Design System', category: 'Project', status: 'To Do', priority: 'High', time: '10:00 AM' },
-    { title: 'User Interviews', category: 'UX Research', status: 'In Progress', priority: 'Medium', time: '02:30 PM' },
-    { title: 'Update Dashboard UI', category: 'Frontend', status: 'In Progress', priority: 'High', time: '04:15 PM' },
-  ];
+  const dispatch = useDispatch();
+  const { list: tasks, loading } = useSelector(state => state.tasks);
+
+  useEffect(() => {
+    dispatch(fetchTasks());
+  }, [dispatch]);
+
+  const activeTasks = tasks.filter(t => t.status !== 'completed');
+  const completedCount = tasks.length - activeTasks.length;
+  const progress = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
 
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Welcome Header */}
       <header className="flex flex-col gap-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1">
+          <div className="space-y-1 text-center md:text-left">
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Welcome back, Vikas 👋</h1>
-            <p className="text-[var(--text-muted)] text-sm md:text-base">You have 3 tasks to focus on today.</p>
+            <p className="text-[var(--text-muted)] text-sm md:text-base">You have {activeTasks.length} tasks to focus on today.</p>
           </div>
           <div className="flex items-center gap-3 w-full md:w-auto">
             <div className="relative flex-1 md:flex-none">
@@ -54,8 +61,8 @@ const Dashboard = () => {
         </div>
 
         {/* Combined Daily Insight Area */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-stretch">
-          <div className="xl:col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 items-stretch">
+          <div className="lg:col-span-1 xl:col-span-2">
             <QuoteCard />
           </div>
           
@@ -85,21 +92,21 @@ const Dashboard = () => {
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard 
           title="Total Tasks" 
-          value="12" 
+          value={tasks.length} 
           color="bg-[var(--pastel-blue)] text-blue-500" 
           icon={<CheckCircle2 size={24} />} 
         />
         <StatCard 
-          title="Events" 
-          value="04" 
+          title="Active" 
+          value={activeTasks.length} 
           color="bg-[var(--pastel-purple)] text-purple-500" 
           icon={<Clock size={24} />} 
         />
         <StatCard 
           title="Progress" 
-          value="78%" 
+          value={`${progress}%`} 
           color="bg-[var(--pastel-green)] text-green-500" 
-          icon={<Clock size={24} />} 
+          icon={<CheckCircle2 size={24} />} 
         />
       </section>
 
@@ -123,15 +130,17 @@ const Dashboard = () => {
           </div>
 
           <div className="space-y-4">
-            {tasks.map((task, i) => (
-              <div key={i} className="glass-card p-5 flex items-center justify-between group hover:scale-[1.01] transition-all">
+            {loading ? (
+              <div className="p-10 text-center text-slate-400">Loading tasks...</div>
+            ) : tasks.slice(0, 5).map((task) => (
+              <div key={task._id} className="glass-card p-5 flex items-center justify-between group hover:scale-[1.01] transition-all">
                 <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${task.status === 'To Do' ? 'bg-[var(--pastel-orange)]' : 'bg-[var(--pastel-blue)]'}`}>
-                    {task.status === 'To Do' ? <AlertCircle size={20} className="text-orange-500" /> : <Clock size={20} className="text-blue-500" />}
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${task.status === 'pending' ? 'bg-[var(--pastel-orange)]' : 'bg-green-50'}`}>
+                    {task.status === 'pending' ? <AlertCircle size={20} className="text-orange-500" /> : <CheckCircle2 size={20} className="text-green-500" />}
                   </div>
                   <div>
-                    <h4 className="font-bold text-[var(--text-main)]">{task.title}</h4>
-                    <p className="text-xs text-[var(--text-muted)]">{task.category} • {task.time}</p>
+                    <h4 className={`font-bold text-[var(--text-main)] ${task.status === 'completed' ? 'line-through opacity-50' : ''}`}>{task.title}</h4>
+                    <p className="text-xs text-[var(--text-muted)]">{task.category} • {task.date}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
@@ -144,6 +153,11 @@ const Dashboard = () => {
                 </div>
               </div>
             ))}
+            {tasks.length === 0 && !loading && (
+              <div className="p-20 text-center border-2 border-dashed border-slate-100 rounded-3xl text-slate-400 text-sm">
+                No tasks yet. Try converting a line from your notes!
+              </div>
+            )}
           </div>
         </section>
 

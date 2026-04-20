@@ -9,7 +9,8 @@ import {
   Wallet,
   Settings, 
   LogOut,
-  ChevronRight
+  ChevronRight,
+  Share2
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -22,6 +23,7 @@ const Sidebar = () => {
     { icon: <Calendar size={20} />, label: 'Calendar', path: '/calendar' },
     { icon: <StickyNote size={20} />, label: 'Notes', path: '/notes' },
     { icon: <Wallet size={20} />, label: 'Moneytoring', path: '/finance' },
+    { icon: <Share2 size={20} />, label: 'Knowledge Graph', path: '/graph' },
   ];
 
 

@@ -46,6 +46,11 @@ const tagRoutes = require('./routes/tagRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 
+// Health Check / Welcome Route
+app.get('/', (req, res) => {
+  res.send('🚀 M.O.M Backend is Live and Running!');
+});
+
 app.use('/api/notes', noteRoutes);
 app.use('/api/folders', folderRoutes);
 app.use('/api/tags', tagRoutes);

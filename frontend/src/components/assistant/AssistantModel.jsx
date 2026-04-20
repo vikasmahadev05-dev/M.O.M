@@ -4,8 +4,8 @@ import { useFrame } from '@react-three/fiber';
 import AssistantFace from './AssistantFace';
 
 const AssistantModel = ({ expression = 'happy' }) => {
-  // Load the new kawaii model from the assets folder
-  const { scene } = useGLTF('/src/assets/kawaii__cute_flying_robot.glb');
+  // Load the new kawaii model from the public folder
+  const { scene } = useGLTF('/kawaii__cute_flying_robot.glb');
   const robotRef = useRef();
 
   useFrame((state) => {

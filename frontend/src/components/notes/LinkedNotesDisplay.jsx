@@ -11,7 +11,7 @@ const LinkedNotesDisplay = ({ noteId }) => {
 
   const fetchLinks = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/notes/${noteId}/linked`);
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/notes/${noteId}/linked`);
       setLinks(res.data);
     } catch (err) {
       console.error('Failed to fetch links:', err);
@@ -32,7 +32,7 @@ const LinkedNotesDisplay = ({ noteId }) => {
   const handleUnlink = async (e, targetId) => {
     e.stopPropagation();
     try {
-      await axios.post('http://localhost:5000/api/notes/unlink', { noteId, targetId });
+      await axios.post(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/notes/unlink`, { noteId, targetId });
       fetchLinks(); // Refresh
     } catch (err) {
       console.error('Unlink failed:', err);

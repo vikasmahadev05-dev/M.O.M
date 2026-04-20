@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api/notes';
+const API_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000') + '/api/notes';
 
 // Async Thunks
 export const fetchNotes = createAsyncThunk('notes/fetchNotes', async ({ search = '', tag = '', folderId = null } = {}) => {

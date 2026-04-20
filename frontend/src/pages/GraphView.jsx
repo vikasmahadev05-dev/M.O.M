@@ -55,7 +55,7 @@ const GraphView = () => {
     const fetchGraph = useCallback(async () => {
         try {
             setLoading(true);
-            const res = await axios.get('http://localhost:5000/api/notes/graph/data');
+            const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/notes/graph/data`);
             setGraphData({
                 nodes: res.data.nodes.map(n => ({ 
                     ...n, 

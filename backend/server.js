@@ -103,7 +103,7 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`M.O.M Backend running on http://localhost:${PORT}`);
+  console.log(`M.O.M Backend running on port ${PORT}`);
 });

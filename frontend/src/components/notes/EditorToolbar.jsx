@@ -1,11 +1,21 @@
 import React from 'react';
 import { 
     Bold, Italic, Heading1, Heading2, List, CheckSquare, Code, 
-    Sparkles, ListChecks, BarChart2, Paperclip 
+    Sparkles, ListChecks, BarChart2, Paperclip, Mic, Image as ImageIcon, Loader2 
 } from 'lucide-react';
 
-const EditorToolbar = ({ editor, onAIAction, onAttach }) => {
+const EditorToolbar = ({ 
+    editor, 
+    onAIAction, 
+    onAttach, 
+    onVoiceToggle, 
+    isListening, 
+    onOCR, 
+    isOcrLoading, 
+    ocrProgress 
+}) => {
     const fileInputRef = React.useRef(null);
+    const ocrInputRef = React.useRef(null);
     if (!editor) return null;
 
     const handleFileChange = (e) => {
@@ -14,6 +24,14 @@ const EditorToolbar = ({ editor, onAIAction, onAttach }) => {
             onAttach(file);
         }
     };
+
+    const handleOCRChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            onOCR(file);
+        }
+    };
+
 
     const buttons = [
         { 
@@ -76,7 +94,8 @@ const EditorToolbar = ({ editor, onAIAction, onAttach }) => {
     ];
 
     return (
-        <div className="flex flex-wrap items-center gap-1 p-2 bg-white/80 backdrop-blur-md border-b border-gray-100 rounded-t-2xl sticky top-0 z-20">
+        <div className="flex items-center gap-1 p-2 bg-white/80 backdrop-blur-md border-b border-gray-100 rounded-t-2xl sticky top-0 z-20 overflow-x-auto no-scrollbar scroll-smooth">
+
             <div className="flex items-center gap-1 pr-2 border-r border-gray-100">
                 {buttons.map((btn, i) => (
                     <button
@@ -94,22 +113,67 @@ const EditorToolbar = ({ editor, onAIAction, onAttach }) => {
                 ))}
             </div>
 
-            <div className="flex items-center gap-1 pl-2 border-l border-gray-100 italic">
-                <input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    onChange={handleFileChange} 
-                    className="hidden" 
-                />
-                <button
-                    onClick={() => fileInputRef.current?.click()}
-                    title="Attach File"
-                    className="p-2 text-indigo-500 hover:bg-indigo-50 rounded-lg transition-all"
-                >
-                    <Paperclip size={16} />
-                </button>
+                <div className="flex items-center gap-1">
+                    <input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        onChange={handleFileChange} 
+                        className="hidden" 
+                    />
+                    <button
+                        onClick={() => fileInputRef.current?.click()}
+                        title="Attach File"
+                        className="p-2 text-indigo-500 hover:bg-indigo-50 rounded-lg transition-all"
+                    >
+                        <Paperclip size={16} />
+                    </button>
+
+                    {/* Voice Input */}
+                    <button
+                        onClick={onVoiceToggle}
+                        title={isListening ? "Stop Voice Input" : "Start Voice Input"}
+                        className={`p-2 rounded-lg transition-all ${
+                            isListening 
+                                ? 'bg-red-500 text-white animate-pulse' 
+                                : 'text-indigo-500 hover:bg-indigo-50'
+                        }`}
+                    >
+                        <Mic size={16} />
+                    </button>
+
+                    {/* OCR (Image-to-Text) */}
+                    <input 
+                        type="file" 
+                        ref={ocrInputRef} 
+                        onChange={handleOCRChange} 
+                        accept="image/*"
+                        className="hidden" 
+                    />
+                    <button
+                        onClick={() => ocrInputRef.current?.click()}
+                        disabled={isOcrLoading}
+                        title="Extract Text from Image (OCR)"
+                        className={`p-2 rounded-lg transition-all relative ${
+                            isOcrLoading 
+                                ? 'bg-indigo-100 text-indigo-400' 
+                                : 'text-indigo-500 hover:bg-indigo-50'
+                        }`}
+                    >
+                        {isOcrLoading ? (
+                            <div className="flex items-center gap-2">
+                                <Loader2 size={16} className="animate-spin" />
+                                {ocrProgress > 0 && <span className="text-[10px] font-bold">{ocrProgress}%</span>}
+                            </div>
+                        ) : (
+                            <ImageIcon size={16} />
+                        )}
+                    </button>
+                </div>
+
+                <div className="flex items-center gap-1 mx-2 h-6 border-r border-gray-100"></div>
 
                 {aiActions.map((action, i) => (
+
                     <button
                         key={i}
                         onClick={action.action}
@@ -120,8 +184,9 @@ const EditorToolbar = ({ editor, onAIAction, onAttach }) => {
                     </button>
                 ))}
             </div>
-        </div>
     );
 };
+
+
 
 export default EditorToolbar;

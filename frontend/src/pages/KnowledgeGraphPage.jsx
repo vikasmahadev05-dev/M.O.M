@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';
 import axios from 'axios';
+import { useSelector } from 'react-redux';
+
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Maximize2, ZoomIn, ZoomOut, RefreshCw } from 'lucide-react';
 
@@ -10,10 +12,17 @@ const KnowledgeGraphPage = () => {
     const navigate = useNavigate();
     const graphRef = useRef();
 
+    const { user } = useSelector(state => state.auth);
+
     useEffect(() => {
         const fetchGraph = async () => {
+            if (!user?.token) return;
             try {
-                const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/notes/graph/data`);
+                const res = await axios.get(
+                    `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/notes/graph/data`,
+                    { headers: { Authorization: `Bearer ${user.token}` } }
+                );
+
                 // react-force-graph expects 'source' and 'target' which the API provides
                 setGraphData({
                     nodes: res.data.nodes.map(n => ({ ...n, name: n.title })),

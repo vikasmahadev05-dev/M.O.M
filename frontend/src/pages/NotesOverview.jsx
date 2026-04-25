@@ -18,9 +18,14 @@ const NotesOverview = () => {
   const { items: notes, status: notesStatus, searchQuery, activeTag } = useSelector(state => state.notes);
   const [filter, setFilter] = useState('All');
 
+  const { user } = useSelector(state => state.auth);
+
   useEffect(() => {
-    dispatch(fetchNotes());
-  }, [dispatch]);
+    if (user) {
+      dispatch(fetchNotes());
+    }
+  }, [dispatch, user]);
+
 
   const handleCreateNote = async () => {
     const result = await dispatch(addNote({
@@ -38,12 +43,24 @@ const NotesOverview = () => {
     return matchesSearch && matchesTag;
   });
 
-  const categories = ['All', 'Work', 'Personal', 'Ideas', 'Urgent'];
+  // Get unique tags from all notes
+  const dynamicTags = React.useMemo(() => {
+    const tags = new Set(['All']);
+    notes.forEach(note => {
+      if (note.tags && Array.isArray(note.tags)) {
+        note.tags.forEach(tag => tags.add(tag));
+      }
+    });
+    return Array.from(tags);
+  }, [notes]);
+
 
   return (
-    <div className="min-h-screen animate-in fade-in duration-500 pb-20">
+    <div className="min-h-screen animate-in fade-in duration-500 pb-20 px-4 md:px-8">
+
       {/* Premium Header Container */}
-      <header className="mb-10 space-y-8">
+      <header className="mb-8 md:mb-12 pt-6 md:pt-10">
+
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-1">
             <h1 className="text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
@@ -75,7 +92,7 @@ const NotesOverview = () => {
           </div>
 
           <div className="flex items-center gap-2 w-full lg:w-auto overflow-x-auto hide-scrollbar pb-2 lg:pb-0">
-            {categories.map((cat) => (
+            {dynamicTags.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setFilter(cat)}
@@ -88,6 +105,7 @@ const NotesOverview = () => {
                 {cat}
               </button>
             ))}
+
             <button className="p-3 bg-white border border-slate-50 rounded-2xl text-slate-400 hover:bg-slate-50 shadow-sm ml-2">
               <Filter size={18} />
             </button>

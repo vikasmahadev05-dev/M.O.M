@@ -1,5 +1,6 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import MainLayout from './layouts/MainLayout';
 import Dashboard from './pages/Dashboard';
 import NotesOverview from './pages/NotesOverview';
@@ -9,27 +10,47 @@ import TodoList from './pages/TodoList';
 import Profile from './pages/Profile';
 import Finance from './pages/Finance';
 import GraphView from './pages/GraphView';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+
+// Protected Route Component
+const ProtectedRoute = ({ children }) => {
+  const { user } = useSelector((state) => state.auth);
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+};
 
 function App() {
   return (
-    <MainLayout>
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/notes" element={<NotesOverview />} />
-        <Route path="/notes/:id" element={<NotesEditorPage />} />
-        <Route path="/calendar" element={<CalendarPage />} />
-        <Route path="/todo" element={<TodoList />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/finance" element={<Finance />} />
-        <Route path="/graph" element={<GraphView />} />
-      </Routes>
-    </MainLayout>
+    <Routes>
+      {/* Auth Routes */}
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+
+      {/* Main App Routes (Protected) */}
+      <Route 
+        path="/*" 
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/notes" element={<NotesOverview />} />
+                <Route path="/notes/:id" element={<NotesEditorPage />} />
+                <Route path="/calendar" element={<CalendarPage />} />
+                <Route path="/todo" element={<TodoList />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/finance" element={<Finance />} />
+                <Route path="/graph" element={<GraphView />} />
+              </Routes>
+            </MainLayout>
+          </ProtectedRoute>
+        } 
+      />
+    </Routes>
   );
 }
 
-
-
-
-
 export default App;
-

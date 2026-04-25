@@ -44,7 +44,9 @@ const noteRoutes = require('./routes/noteRoutes');
 const folderRoutes = require('./routes/folderRoutes');
 const tagRoutes = require('./routes/tagRoutes');
 const aiRoutes = require('./routes/aiRoutes');
+const authRoutes = require('./routes/authRoutes');
 const taskRoutes = require('./routes/taskRoutes');
+
 
 // Health Check / Welcome Route
 app.get('/', (req, res) => {
@@ -56,6 +58,8 @@ app.use('/api/folders', folderRoutes);
 app.use('/api/tags', tagRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/tasks', taskRoutes);
+app.use('/api/auth', authRoutes);
+
 
 /**
  * GET /api/quote

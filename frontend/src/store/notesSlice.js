@@ -4,80 +4,187 @@ import axios from 'axios';
 const API_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000') + '/api/notes';
 
 // Async Thunks
-export const fetchNotes = createAsyncThunk('notes/fetchNotes', async ({ search = '', tag = '', folderId = null } = {}) => {
+export const fetchNotes = createAsyncThunk('notes/fetchNotes', async ({ search = '', tag = '', folderId = null } = {}, thunkAPI) => {
+  const token = thunkAPI.getState().auth.user?.token;
+  if (!token) return thunkAPI.rejectWithValue('No token found');
+
   const params = new URLSearchParams();
   if (search) params.append('search', search);
   if (tag) params.append('tag', tag);
   if (folderId) params.append('folderId', folderId);
   
-  const response = await axios.get(`${API_URL}?${params.toString()}`);
-  return response.data;
+  const config = { headers: { Authorization: `Bearer ${token}` } };
+  
+  try {
+    const response = await axios.get(`${API_URL}?${params.toString()}`, config);
+    return response.data;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+  }
 });
 
-export const addNote = createAsyncThunk('notes/addNote', async (noteData) => {
-  const response = await axios.post(API_URL, noteData);
-  return response.data;
+
+
+export const addNote = createAsyncThunk('notes/addNote', async (noteData, thunkAPI) => {
+  const token = thunkAPI.getState().auth.user?.token;
+  if (!token) return thunkAPI.rejectWithValue('No token found');
+  const config = { headers: { Authorization: `Bearer ${token}` } };
+  
+  try {
+    const response = await axios.post(API_URL, noteData, config);
+    return response.data;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+  }
 });
 
-export const updateNote = createAsyncThunk('notes/updateNote', async ({ id, ...noteData }) => {
-  const response = await axios.put(`${API_URL}/${id}`, noteData);
-  return response.data;
+
+export const updateNote = createAsyncThunk('notes/updateNote', async ({ id, ...noteData }, thunkAPI) => {
+  const token = thunkAPI.getState().auth.user?.token;
+  if (!token) return thunkAPI.rejectWithValue('No token found');
+  const config = { headers: { Authorization: `Bearer ${token}` } };
+  
+  try {
+    const response = await axios.put(`${API_URL}/${id}`, noteData, config);
+    return response.data;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+  }
 });
 
-export const deleteNote = createAsyncThunk('notes/deleteNote', async (id) => {
-  await axios.delete(`${API_URL}/${id}`);
-  return id;
+export const deleteNote = createAsyncThunk('notes/deleteNote', async (id, thunkAPI) => {
+  const token = thunkAPI.getState().auth.user?.token;
+  if (!token) return thunkAPI.rejectWithValue('No token found');
+  const config = { headers: { Authorization: `Bearer ${token}` } };
+  
+  try {
+    await axios.delete(`${API_URL}/${id}`, config);
+    return id;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+  }
 });
 
-export const duplicateNote = createAsyncThunk('notes/duplicateNote', async (note) => {
+
+
+export const duplicateNote = createAsyncThunk('notes/duplicateNote', async (note, thunkAPI) => {
   const { _id, createdAt, updatedAt, ...rest } = note;
-  const response = await axios.post(API_URL, {
-    ...rest,
-    title: `${rest.title} (Copy)`
-  });
-  return response.data;
+  const token = thunkAPI.getState().auth.user?.token;
+  if (!token) return thunkAPI.rejectWithValue('No token found');
+  const config = { headers: { Authorization: `Bearer ${token}` } };
+  
+  try {
+    const response = await axios.post(API_URL, {
+      ...rest,
+      title: `${rest.title} (Copy)`
+    }, config);
+    return response.data;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+  }
 });
 
-export const linkNotes = createAsyncThunk('notes/linkNotes', async ({ noteId, targetId, reason = '' }, { dispatch }) => {
-  const response = await axios.post(`${API_URL}/link`, { noteId, targetId, reason });
-  dispatch(fetchNotes()); // Refresh all notes to get updated links
-  return response.data;
+
+export const linkNotes = createAsyncThunk('notes/linkNotes', async ({ noteId, targetId, reason = '' }, thunkAPI) => {
+  const token = thunkAPI.getState().auth.user?.token;
+  if (!token) return thunkAPI.rejectWithValue('No token found');
+  const config = { headers: { Authorization: `Bearer ${token}` } };
+  
+  try {
+    const response = await axios.post(`${API_URL}/link`, { noteId, targetId, reason }, config);
+    thunkAPI.dispatch(fetchNotes()); // Refresh all notes to get updated links
+    return response.data;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+  }
 });
 
-export const unlinkNotes = createAsyncThunk('notes/unlinkNotes', async ({ noteId, targetId }, { dispatch }) => {
-  const response = await axios.post(`${API_URL}/unlink`, { noteId, targetId });
-  dispatch(fetchNotes()); // Refresh data
-  return response.data;
+
+
+export const unlinkNotes = createAsyncThunk('notes/unlinkNotes', async ({ noteId, targetId }, thunkAPI) => {
+  const token = thunkAPI.getState().auth.user?.token;
+  if (!token) return thunkAPI.rejectWithValue('No token found');
+  const config = { headers: { Authorization: `Bearer ${token}` } };
+  
+  try {
+    const response = await axios.post(`${API_URL}/unlink`, { noteId, targetId }, config);
+    thunkAPI.dispatch(fetchNotes()); // Refresh data
+    return response.data;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+  }
 });
 
-export const updateNotePosition = createAsyncThunk('notes/updateNotePosition', async ({ id, fx, fy }) => {
-  const response = await axios.put(`${API_URL}/${id}`, { fx, fy });
-  return response.data;
+export const updateNotePosition = createAsyncThunk('notes/updateNotePosition', async ({ id, fx, fy }, thunkAPI) => {
+  const token = thunkAPI.getState().auth.user?.token;
+  if (!token) return thunkAPI.rejectWithValue('No token found');
+  const config = { headers: { Authorization: `Bearer ${token}` } };
+  
+  try {
+    const response = await axios.put(`${API_URL}/${id}`, { fx, fy }, config);
+    return response.data;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+  }
 });
 
-export const clearAllGraphPins = createAsyncThunk('notes/clearAllGraphPins', async () => {
-  const response = await axios.post(`${API_URL}/graph/clear-pins`);
-  return response.data;
+
+export const clearAllGraphPins = createAsyncThunk('notes/clearAllGraphPins', async (_, thunkAPI) => {
+  const token = thunkAPI.getState().auth.user?.token;
+  if (!token) return thunkAPI.rejectWithValue('No token found');
+  const config = { headers: { Authorization: `Bearer ${token}` } };
+  
+  try {
+    const response = await axios.post(`${API_URL}/graph/clear-pins`, {}, config);
+    return response.data;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+  }
 });
 
-export const uploadAttachment = createAsyncThunk('notes/uploadAttachment', async ({ noteId, file }) => {
+
+
+export const uploadAttachment = createAsyncThunk('notes/uploadAttachment', async ({ noteId, file }, thunkAPI) => {
+  const token = thunkAPI.getState().auth.user?.token;
+  if (!token) return thunkAPI.rejectWithValue('No token found');
+  
   const formData = new FormData();
   formData.append('file', file);
   
-  // 1. Upload file to get metadata
-  const uploadRes = await axios.post(`${API_URL}/upload`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  });
-  
-  // 2. Attach metadata to note
-  const attachRes = await axios.post(`${API_URL}/${noteId}/attach`, uploadRes.data);
-  return { noteId, note: attachRes.data };
+  try {
+    // 1. Upload file to get metadata
+    const uploadRes = await axios.post(`${API_URL}/upload`, formData, {
+      headers: { 
+        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${token}`
+      }
+    });
+    
+    // 2. Attach metadata to note
+    const attachRes = await axios.post(`${API_URL}/${noteId}/attach`, uploadRes.data, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return { noteId, note: attachRes.data };
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+  }
 });
 
-export const removeAttachment = createAsyncThunk('notes/removeAttachment', async ({ noteId, attachmentId }) => {
-  await axios.delete(`${API_URL}/${noteId}/attachments/${attachmentId}`);
-  return { noteId, attachmentId };
+
+export const removeAttachment = createAsyncThunk('notes/removeAttachment', async ({ noteId, attachmentId }, thunkAPI) => {
+  const token = thunkAPI.getState().auth.user?.token;
+  if (!token) return thunkAPI.rejectWithValue('No token found');
+  const config = { headers: { Authorization: `Bearer ${token}` } };
+  
+  try {
+    await axios.delete(`${API_URL}/${noteId}/attachments/${attachmentId}`, config);
+    return { noteId, attachmentId };
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+  }
 });
+
+
 
 const initialState = {
   items: [],

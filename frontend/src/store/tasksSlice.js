@@ -3,25 +3,58 @@ import axios from 'axios';
 
 const API_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000') + '/api/tasks';
 
-export const fetchTasks = createAsyncThunk('tasks/fetchTasks', async () => {
-  const response = await axios.get(API_URL);
-  return response.data;
+export const fetchTasks = createAsyncThunk('tasks/fetchTasks', async (_, thunkAPI) => {
+  const token = thunkAPI.getState().auth.user?.token;
+  if (!token) return thunkAPI.rejectWithValue('No token found');
+  const config = { headers: { Authorization: `Bearer ${token}` } };
+  
+  try {
+    const response = await axios.get(API_URL, config);
+    return response.data;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+  }
 });
 
-export const addTask = createAsyncThunk('tasks/addTask', async (taskData) => {
-  const response = await axios.post(API_URL, taskData);
-  return response.data;
+export const addTask = createAsyncThunk('tasks/addTask', async (taskData, thunkAPI) => {
+  const token = thunkAPI.getState().auth.user?.token;
+  if (!token) return thunkAPI.rejectWithValue('No token found');
+  const config = { headers: { Authorization: `Bearer ${token}` } };
+  
+  try {
+    const response = await axios.post(API_URL, taskData, config);
+    return response.data;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+  }
 });
 
-export const toggleTask = createAsyncThunk('tasks/toggleTask', async (id) => {
-  const response = await axios.patch(`${API_URL}/${id}/toggle`);
-  return response.data;
+export const toggleTask = createAsyncThunk('tasks/toggleTask', async (id, thunkAPI) => {
+  const token = thunkAPI.getState().auth.user?.token;
+  if (!token) return thunkAPI.rejectWithValue('No token found');
+  const config = { headers: { Authorization: `Bearer ${token}` } };
+  
+  try {
+    const response = await axios.patch(`${API_URL}/${id}/toggle`, {}, config);
+    return response.data;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+  }
 });
 
-export const deleteTask = createAsyncThunk('tasks/deleteTask', async (id) => {
-  await axios.delete(`${API_URL}/${id}`);
-  return id;
+export const deleteTask = createAsyncThunk('tasks/deleteTask', async (id, thunkAPI) => {
+  const token = thunkAPI.getState().auth.user?.token;
+  if (!token) return thunkAPI.rejectWithValue('No token found');
+  const config = { headers: { Authorization: `Bearer ${token}` } };
+  
+  try {
+    await axios.delete(`${API_URL}/${id}`, config);
+    return id;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+  }
 });
+
 
 const tasksSlice = createSlice({
   name: 'tasks',

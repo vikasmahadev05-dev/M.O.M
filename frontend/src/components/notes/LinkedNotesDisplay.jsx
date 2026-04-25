@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import axios from 'axios';
+
 import { useNavigate } from 'react-router-dom';
 import { Link2, ArrowUpRight, X, Anchor, ArrowRightLeft } from 'lucide-react';
 import { extractPlainText } from '../../utils/noteUtils';
@@ -8,10 +10,16 @@ const LinkedNotesDisplay = ({ noteId }) => {
   const [links, setLinks] = useState({ outgoing: [], backlinks: [] });
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { user } = useSelector(state => state.auth);
+
 
   const fetchLinks = async () => {
+    if (!user?.token) return;
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/notes/${noteId}/linked`);
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/notes/${noteId}/linked`,
+        { headers: { Authorization: `Bearer ${user.token}` } }
+      );
       setLinks(res.data);
     } catch (err) {
       console.error('Failed to fetch links:', err);
@@ -19,6 +27,7 @@ const LinkedNotesDisplay = ({ noteId }) => {
       setLoading(false);
     }
   };
+
 
   useEffect(() => {
     const isValidId = /^[0-9a-fA-F]{24}$/.test(noteId);
@@ -31,13 +40,19 @@ const LinkedNotesDisplay = ({ noteId }) => {
 
   const handleUnlink = async (e, targetId) => {
     e.stopPropagation();
+    if (!user?.token) return;
     try {
-      await axios.post(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/notes/unlink`, { noteId, targetId });
+      await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/notes/unlink`,
+        { noteId, targetId },
+        { headers: { Authorization: `Bearer ${user.token}` } }
+      );
       fetchLinks(); // Refresh
     } catch (err) {
       console.error('Unlink failed:', err);
     }
   };
+
 
   if (loading) return <div className="animate-pulse text-slate-300 text-[10px] font-black uppercase tracking-[0.2em] pt-10">Syncing Neurons...</div>;
   if (links.outgoing.length === 0 && links.backlinks.length === 0) return null;

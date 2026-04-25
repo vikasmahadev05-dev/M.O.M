@@ -3,6 +3,8 @@ import notesReducer from './notesSlice';
 import foldersReducer from './foldersSlice';
 import tagsReducer from './tagsSlice';
 import tasksReducer from './tasksSlice';
+import authReducer from './authSlice';
+
 
 export const store = configureStore({
   reducer: {
@@ -10,5 +12,7 @@ export const store = configureStore({
     folders: foldersReducer,
     tags: tagsReducer,
     tasks: tasksReducer,
+    auth: authReducer,
   },
+
 });

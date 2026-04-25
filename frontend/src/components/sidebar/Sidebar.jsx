@@ -1,6 +1,10 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
+import { useDispatch, useSelector } from 'react-redux';
+import { logout } from '../../store/authSlice';
+
+
 import { 
   LayoutDashboard, 
   CheckSquare, 
@@ -16,6 +20,14 @@ import {
 const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
+
+  const onLogout = () => {
+    dispatch(logout());
+    navigate('/login');
+  };
+
 
   const navItems = [
     { icon: <LayoutDashboard size={20} />, label: 'Dashboard', path: '/' },
@@ -58,24 +70,32 @@ const Sidebar = () => {
 
 
       {/* Profile Card */}
-      <div className="mt-auto pt-6 border-t border-[var(--border)]">
-        <div 
-          onClick={() => navigate('/profile')}
-          className={`flex items-center gap-3 p-2 rounded-2xl hover:bg-slate-50 transition-colors cursor-pointer group ${location.pathname === '/profile' ? 'bg-indigo-50/50' : ''}`}
-        >
-          <div className="w-12 h-12 rounded-full bg-[var(--pastel-purple)] flex items-center justify-center border-2 border-white overflow-hidden shadow-sm">
-            <img 
-              src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" 
-              alt="User"
-              className="w-full h-full object-cover"
-            />
+        <div className="flex items-center gap-3 p-2 rounded-2xl hover:bg-slate-50 transition-colors group">
+          <div 
+             onClick={() => navigate('/profile')}
+             className={`flex flex-1 items-center gap-3 cursor-pointer ${location.pathname === '/profile' ? 'bg-indigo-50/50 p-1 rounded-xl' : ''}`}
+          >
+            <div className="w-10 h-10 rounded-full bg-[var(--pastel-purple)] flex items-center justify-center border-2 border-white overflow-hidden shadow-sm shrink-0">
+              <img 
+                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username || 'Felix'}`} 
+                alt="User"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="flex-1 overflow-hidden text-left">
+              <p className="font-semibold text-sm text-[var(--text-main)] truncate">{user?.username || 'User'}</p>
+              <p className="text-[10px] uppercase font-bold tracking-tighter text-[var(--text-muted)] truncate">Member</p>
+            </div>
           </div>
-          <div className="flex-1 overflow-hidden text-left">
-            <p className="font-semibold text-sm text-[var(--text-main)] truncate">Vikas Sharma</p>
-            <p className="text-xs text-[var(--text-muted)] truncate">Product Manager</p>
-          </div>
+          <button 
+            onClick={onLogout}
+            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+            title="Logout"
+          >
+            <LogOut size={18} />
+          </button>
         </div>
-      </div>
+
 
     </aside>
   );

@@ -28,9 +28,14 @@ const Dashboard = () => {
   const dispatch = useDispatch();
   const { list: tasks, loading } = useSelector(state => state.tasks);
 
+  const { user } = useSelector(state => state.auth);
+
   useEffect(() => {
-    dispatch(fetchTasks());
-  }, [dispatch]);
+    if (user) {
+      dispatch(fetchTasks());
+    }
+  }, [dispatch, user]);
+
 
   const activeTasks = tasks.filter(t => t.status !== 'completed');
   const completedCount = tasks.length - activeTasks.length;

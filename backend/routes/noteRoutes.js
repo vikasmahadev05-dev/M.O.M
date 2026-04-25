@@ -4,6 +4,11 @@ const Note = require('../models/Note');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { protect } = require('../middleware/authMiddleware');
+
+// Apply protection to all note routes
+router.use(protect);
+
 
 // Ensure uploads directory exists
 const uploadDir = 'uploads';
@@ -55,7 +60,11 @@ router.get('/', async (req, res) => {
       query.folderId = folderId;
     }
 
+    // Always filter by current user
+    query.userId = req.user._id;
+
     const notes = await Note.find(query).sort({ isPinned: -1, updatedAt: -1 });
+
     res.json(notes);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -65,7 +74,8 @@ router.get('/', async (req, res) => {
 // Get a single note
 router.get('/:id', async (req, res) => {
   try {
-    const note = await Note.findById(req.params.id);
+    const note = await Note.findOne({ _id: req.params.id, userId: req.user._id });
+
     if (!note) return res.status(404).json({ message: 'Note not found' });
     res.json(note);
   } catch (error) {
@@ -76,6 +86,7 @@ router.get('/:id', async (req, res) => {
 // Create a new note
 router.post('/', async (req, res) => {
   const note = new Note({
+    userId: req.user._id,
     title: req.body.title || 'Untitled Note',
     content: req.body.content || '',
     isPinned: req.body.isPinned || false,
@@ -83,6 +94,7 @@ router.post('/', async (req, res) => {
     folderId: req.body.folderId || null,
     color: req.body.color
   });
+
 
   try {
     const newNote = await note.save();
@@ -95,7 +107,8 @@ router.post('/', async (req, res) => {
 // Update a note
 router.put('/:id', async (req, res) => {
   try {
-    const note = await Note.findById(req.params.id);
+    const note = await Note.findOne({ _id: req.params.id, userId: req.user._id });
+
     if (!note) return res.status(404).json({ message: 'Note not found' });
 
     if (req.body.title !== undefined) note.title = req.body.title;
@@ -150,9 +163,10 @@ router.put('/:id', async (req, res) => {
 router.get('/:id/linked', async (req, res) => {
   try {
     const noteId = req.params.id;
-    const note = await Note.findById(noteId)
+    const note = await Note.findOne({ _id: noteId, userId: req.user._id })
       .populate('links.targetId', 'title content color tags priority')
       .lean();
+
       
     if (!note) return res.status(404).json({ message: 'Note not found' });
 
@@ -313,7 +327,8 @@ router.post('/graph/clear-pins', async (req, res) => {
 // Delete a note
 router.delete('/:id', async (req, res) => {
   try {
-    const note = await Note.findById(req.params.id);
+    const note = await Note.findOne({ _id: req.params.id, userId: req.user._id });
+
     if (!note) return res.status(404).json({ message: 'Note not found' });
 
     await note.deleteOne();
@@ -345,8 +360,9 @@ router.post('/upload', upload.single('file'), (req, res) => {
 // Attach metadata to a note
 router.post('/:id/attach', async (req, res) => {
   try {
-    const note = await Note.findById(req.params.id);
+    const note = await Note.findOne({ _id: req.params.id, userId: req.user._id });
     if (!note) return res.status(404).json({ message: 'Note not found' });
+
 
     note.attachments.push(req.body); // Body: { url, name, fileType, size }
     await note.save();
@@ -359,8 +375,9 @@ router.post('/:id/attach', async (req, res) => {
 // Remove attachment from note and disk
 router.delete('/:id/attachments/:attachmentId', async (req, res) => {
   try {
-    const note = await Note.findById(req.params.id);
+    const note = await Note.findOne({ _id: req.params.id, userId: req.user._id });
     if (!note) return res.status(404).json({ message: 'Note not found' });
+
 
     const attachment = note.attachments.id(req.params.attachmentId);
     if (!attachment) return res.status(404).json({ message: 'Attachment not found' });

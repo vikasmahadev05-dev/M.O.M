@@ -61,18 +61,20 @@
     line-height: 32px;
   }
 
-  .hide-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .hide-scrollbar {
+  .hide-scrollbar, .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+  .hide-scrollbar::-webkit-scrollbar, .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
 
   /* TipTap Specific Styling */
   .ProseMirror {
     outline: none !important;
-    @apply p-8 md:p-12;
+    @apply p-4 md:p-12;
+
   }
 
   .ProseMirror p.is-editor-empty:first-child::before {

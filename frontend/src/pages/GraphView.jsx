@@ -14,7 +14,8 @@ import {
     Trash2,
     Info
 } from 'lucide-react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+
 import { updateNotePosition, clearAllGraphPins } from '../store/notesSlice';
 
 const GraphView = () => {
@@ -22,7 +23,10 @@ const GraphView = () => {
     const [graphData, setGraphData] = useState({ nodes: [], links: [] });
     const [loading, setLoading] = useState(true);
     const [hoverNode, setHoverNode] = useState(null);
+    const { user } = useSelector(state => state.auth);
+
     const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
+
     const navigate = useNavigate();
     const graphRef = useRef();
 
@@ -53,9 +57,13 @@ const GraphView = () => {
     };
 
     const fetchGraph = useCallback(async () => {
+        if (!user?.token) return;
         try {
             setLoading(true);
-            const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/notes/graph/data`);
+            const res = await axios.get(
+                `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/notes/graph/data`,
+                { headers: { Authorization: `Bearer ${user.token}` } }
+            );
             setGraphData({
                 nodes: res.data.nodes.map(n => ({ 
                     ...n, 
@@ -73,7 +81,8 @@ const GraphView = () => {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [user?.token]);
+
 
     useEffect(() => {
         fetchGraph();

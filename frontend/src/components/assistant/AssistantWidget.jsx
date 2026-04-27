@@ -53,8 +53,16 @@ const AssistantWidget = () => {
         <div className="w-full h-full relative z-10">
           <Canvas 
             shadows 
+            gl={{ 
+              antialias: true,
+              alpha: true,
+              stencil: false,
+              depth: true,
+              precision: "mediump", // Better compatibility
+              powerPreference: "high-performance",
+            }}
             camera={{ position: [0, 0, 4], fov: 40 }}
-            style={{ width: '100%', height: '100%' }}
+            style={{ width: '100%', height: '100%', touchAction: 'none' }}
           >
             <ambientLight intensity={1.5} />
             <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={2.5} />

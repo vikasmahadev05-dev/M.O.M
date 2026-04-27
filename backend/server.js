@@ -46,6 +46,7 @@ const tagRoutes = require('./routes/tagRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const authRoutes = require('./routes/authRoutes');
 const taskRoutes = require('./routes/taskRoutes');
+const calendarRoutes = require('./routes/calendarRoutes');
 
 
 // Health Check / Welcome Route
@@ -58,7 +59,10 @@ app.use('/api/folders', folderRoutes);
 app.use('/api/tags', tagRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/tasks', taskRoutes);
+app.use('/api/calendar', calendarRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/reminders', require('./routes/reminderRoutes'));
+app.use('/api/google', require('./routes/googleRoutes'));
 
 
 /**
@@ -112,7 +116,26 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
+// Real-time Notifications Setup
+const http = require('http');
+const { Server } = require('socket.io');
+
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
+
+app.set('io', io);
+
+io.on('connection', (socket) => {
+  console.log('User connected for real-time notifications:', socket.id);
+  socket.on('disconnect', () => console.log('User disconnected'));
+});
+
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`M.O.M Backend running on port ${PORT}`);
+server.listen(PORT, () => {
+  console.log(`M.O.M Backend running on port ${PORT} (Real-time Enabled)`);
 });

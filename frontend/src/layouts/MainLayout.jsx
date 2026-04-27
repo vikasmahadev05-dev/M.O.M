@@ -1,9 +1,13 @@
 import React from 'react';
 import Sidebar from '../components/sidebar/Sidebar';
 import MobileNav from '../components/mobilenav/MobileNav';
+import { Toaster } from 'sonner';
 import AssistantWidget from '../components/assistant/AssistantWidget';
 
+import useReminderChecker from '../hooks/useReminderChecker.jsx';
+
 const MainLayout = ({ children }) => {
+  useReminderChecker(); // Initialize the global reminder listener
   return (
     <div className="flex bg-[var(--bg-primary)] min-h-screen pb-20 md:pb-0 relative">
       {/* Column 1: Sticky Sidebar (Hidden on mobile) */}
@@ -20,6 +24,9 @@ const MainLayout = ({ children }) => {
 
       {/* AI Assistant Widget (Global) */}
       <AssistantWidget />
+
+      {/* Global Notifications */}
+      <Toaster position="bottom-right" expand={true} richColors />
     </div>
   );
 };

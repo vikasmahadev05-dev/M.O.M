@@ -343,8 +343,8 @@ router.post('/upload', upload.single('file'), (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
     
-    // Create full URL (using localhost for dev, should be dynamic for prod)
-    const fileUrl = `http://localhost:5000/uploads/${req.file.filename}`;
+    // Create relative URL (Frontend will prepend API base URL)
+    const fileUrl = `uploads/${req.file.filename}`;
     
     res.json({
       url: fileUrl,

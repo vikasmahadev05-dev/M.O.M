@@ -25,6 +25,20 @@ const userSchema = new mongoose.Schema({
   avatar: {
     type: String,
     default: '' // Can be a URL or a pastel color code
+  },
+  googleConnected: {
+    type: Boolean,
+    default: false
+  },
+  googleAccessToken: String,
+  googleRefreshToken: String,
+  googleCalendarId: {
+    type: String,
+    default: 'primary'
+  },
+  googleSyncEnabled: {
+    type: Boolean,
+    default: false
   }
 }, { timestamps: true });
 

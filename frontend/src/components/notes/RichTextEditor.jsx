@@ -18,18 +18,41 @@ import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { addTask } from '../../store/tasksSlice';
+import { fixUrl } from '../../utils/urlHelper';
 
 const RichTextEditor = ({ content, onChange, editorRef, attachments, onRemoveAttachment }) => {
     const dispatch = useDispatch();
     const location = useLocation();
     const { items: allNotes } = useSelector(state => state.notes);
+
+    // Recursively fix image URLs in TipTap JSON
+    const processContent = (node) => {
+        if (!node) return node;
+        if (node.type === 'image' && node.attrs && node.attrs.src) {
+            return {
+                ...node,
+                attrs: {
+                    ...node.attrs,
+                    src: fixUrl(node.attrs.src)
+                }
+            };
+        }
+        if (node.content && Array.isArray(node.content)) {
+            return {
+                ...node,
+                content: node.content.map(processContent)
+            };
+        }
+        return node;
+    };
+
     // Determine if content is JSON or plain string (for migration)
     const initialContent = (() => {
         if (!content) return '';
         try {
             // Attempt to parse JSON
             const parsed = typeof content === 'string' ? JSON.parse(content) : content;
-            return parsed;
+            return processContent(parsed);
         } catch (e) {
             // If it's plain text, convert to a basic Paragraph structure for TipTap
             return content;
@@ -130,7 +153,7 @@ const RichTextEditor = ({ content, onChange, editorRef, attachments, onRemoveAtt
         if (content !== currentContent) {
             try {
                 const parsed = typeof content === 'string' ? JSON.parse(content) : content;
-                editor.commands.setContent(parsed, false);
+                editor.commands.setContent(processContent(parsed), false);
             } catch (e) {
                 editor.commands.setContent(content, false);
             }

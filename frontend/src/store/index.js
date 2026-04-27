@@ -4,6 +4,7 @@ import foldersReducer from './foldersSlice';
 import tagsReducer from './tagsSlice';
 import tasksReducer from './tasksSlice';
 import authReducer from './authSlice';
+import calendarReducer from './calendarSlice';
 
 
 export const store = configureStore({
@@ -13,6 +14,7 @@ export const store = configureStore({
     tags: tagsReducer,
     tasks: tasksReducer,
     auth: authReducer,
+    calendar: calendarReducer,
   },
 
 });

@@ -1,68 +1,111 @@
 import React from 'react';
-import { MoreHorizontal, Clock, Calendar as CalendarIcon } from 'lucide-react';
+import { MoreHorizontal, Clock, Calendar as CalendarIcon, CheckCircle2 } from 'lucide-react';
+import { useSelector } from 'react-redux';
+import { format, isAfter, startOfDay } from 'date-fns';
 
-const ScheduleItem = ({ title, time, date, category, statusColor }) => (
-  <div className="p-4 bg-white border border-[var(--border)] rounded-2xl group hover:border-[var(--accent)] transition-all hover:scale-[1.02] cursor-pointer">
-    <div className="flex items-start justify-between mb-3">
-      <div className="flex items-center gap-3">
-        <input type="checkbox" className="w-5 h-5 rounded-md border-slate-200 text-[var(--accent)] focus:ring-[var(--accent)] cursor-pointer" />
-        <div>
-          <h4 className="font-bold text-sm text-[var(--text-main)] group-hover:text-[var(--accent)] transition-colors">{title}</h4>
-          <p className="text-[10px] text-[var(--text-muted)] font-medium">Due {date}</p>
+const ScheduleItem = ({ item }) => (
+  <div className="group relative p-5 bg-white border border-slate-100/80 rounded-[1.5rem] hover:border-indigo-200 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/10 cursor-pointer overflow-hidden">
+    <div 
+      className="absolute top-0 left-0 w-1.5 h-full transition-all duration-300 group-hover:w-2" 
+      style={{ backgroundColor: item.colorTag || '#9333ea' }}
+    />
+    
+    <div className="flex flex-col gap-4">
+      <div className="flex items-start justify-between">
+        <div className="space-y-1">
+          <h4 className="font-black text-sm text-slate-800 group-hover:text-indigo-600 transition-colors line-clamp-1 tracking-tight">
+            {item.title}
+          </h4>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              {format(new Date(item.startTime), 'MMM d')}
+            </span>
+            <div className="w-1 h-1 rounded-full bg-slate-200" />
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              {format(new Date(item.startTime), 'h:mm a')}
+            </span>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button className="p-2 hover:bg-slate-50 rounded-xl text-slate-400 hover:text-indigo-600 transition-all">
+            <MoreHorizontal size={16} strokeWidth={3} />
+          </button>
         </div>
       </div>
-      <span className="text-xs font-bold text-[var(--text-main)]">{time}</span>
-    </div>
-    
-    <div className="flex items-center justify-between">
-      <span className={`px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-widest ${statusColor}`}>
-        {category}
-      </span>
-      <button className="p-1 hover:bg-slate-50 rounded-lg text-slate-300">
-        <MoreHorizontal size={16} />
-      </button>
+      
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div 
+            className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest"
+            style={{ backgroundColor: `${item.colorTag}15`, color: item.colorTag }}
+          >
+            {item.type}
+          </div>
+          {item.calendarName && (
+            <div className="px-3 py-1 rounded-full bg-slate-50 text-slate-400 text-[9px] font-black uppercase tracking-widest border border-slate-100 max-w-[100px] truncate">
+              {item.calendarName}
+            </div>
+          )}
+        </div>
+        
+        <div className="flex items-center gap-2">
+          {item.status === 'completed' ? (
+            <div className="w-6 h-6 bg-emerald-50 rounded-lg flex items-center justify-center text-emerald-500">
+              <CheckCircle2 size={14} strokeWidth={3} />
+            </div>
+          ) : (
+            <div className="w-6 h-6 bg-slate-50 rounded-lg flex items-center justify-center text-slate-300">
+              <Clock size={14} strokeWidth={3} />
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   </div>
 );
 
 const SchedulePanel = () => {
-  const schedule = [
-    { title: 'Team Meeting', time: '2 PM', date: '22/04/2026', category: 'Meetings', statusColor: 'bg-indigo-50 text-indigo-500' },
-    { title: 'Gym Session', time: '4:30 PM', date: '23/04/2026', category: 'Health', statusColor: 'bg-pink-50 text-pink-500' },
-    { title: 'Review Design Draft', time: 'All Day', date: '24/04/2026', category: 'Work', statusColor: 'bg-blue-50 text-blue-500' },
-    { title: 'Project Presentation', time: '11 AM', date: '25/04/2026', category: 'Deep Work', statusColor: 'bg-emerald-50 text-emerald-500' },
-  ];
+  const { items } = useSelector((state) => state.calendar);
+  
+  // Get upcoming 5 items
+  const upcomingItems = [...items]
+    .filter(item => {
+      const isUpcoming = isAfter(new Date(item.startTime), startOfDay(new Date()));
+      return isUpcoming && item.status !== 'completed';
+    })
+    .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
+    .slice(0, 5);
 
   return (
-    <div className="bg-slate-50/50 border border-[var(--border)] rounded-3xl p-6 h-full space-y-6 animate-in fade-in slide-in-from-right-6 duration-700">
+    <div className="bg-white/50 backdrop-blur-xl border border-white/40 rounded-[2.5rem] p-8 h-fit space-y-8 animate-in fade-in slide-in-from-right-6 duration-700 shadow-xl shadow-slate-200/50">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-[var(--text-main)]">Upcoming Schedule</h2>
-        <button className="p-2 hover:bg-white rounded-xl text-slate-300">
-          <MoreHorizontal size={20} />
-        </button>
+        <div className="space-y-1">
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight">Timeline</h2>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Next 24 hours</p>
+        </div>
+        <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-white font-black text-sm shadow-xl shadow-slate-900/20">
+          {upcomingItems.length}
+        </div>
       </div>
 
-      <div className="flex gap-2 mb-4 bg-white/50 p-1 rounded-2xl border border-[var(--border)]">
-        {['All', 'Meetings', 'Work'].map((tab, i) => (
-          <button 
-            key={tab} 
-            className={`flex-1 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${i === 0 ? 'bg-[var(--accent)] text-white shadow-md' : 'text-[var(--text-muted)] hover:bg-white'}`}
-          >
-            {tab}
-          </button>
-        ))}
-        <button className="px-2 text-[var(--text-muted)]"><MoreHorizontal size={14} /></button>
-      </div>
+      {upcomingItems.length === 0 ? (
+        <div className="text-center py-12 bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
+          <CalendarIcon size={32} className="mx-auto text-slate-200 mb-3" />
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">All caught up!</p>
+        </div>
+      ) : (
+        <div className="space-y-5">
+          {upcomingItems.map((item) => (
+            <ScheduleItem key={item._id} item={item} />
+          ))}
+        </div>
+      )}
 
-      <div className="space-y-4">
-        <h3 className="text-[10px] font-black text-slate-300 uppercase tracking-widest px-1">Today</h3>
-        {schedule.map((item, i) => (
-          <ScheduleItem key={i} {...item} />
-        ))}
-      </div>
-
-      <button className="w-full py-3 text-xs font-bold text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors text-center border-t border-[var(--border)] pt-6 mt-4 uppercase tracking-widest">
-        View all
+      <button className="group w-full py-5 bg-slate-50 hover:bg-slate-900 hover:text-white rounded-[1.5rem] transition-all duration-500 flex items-center justify-center gap-3 overflow-hidden relative">
+        <span className="text-[10px] font-black uppercase tracking-[0.2em] relative z-10">Full Agenda</span>
+        <Clock size={16} className="relative z-10 group-hover:rotate-12 transition-transform" />
+        <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-violet-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
       </button>
     </div>
   );

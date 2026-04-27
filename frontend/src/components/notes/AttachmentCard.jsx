@@ -1,9 +1,10 @@
 import React from 'react';
 import { FileText, Download, Trash2, Eye, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { fixUrl } from '../../utils/urlHelper';
 
 const AttachmentCard = ({ attachment, onRemove, onOpen }) => {
-    const isImage = attachment.fileType === 'image';
+    const isImage = attachment.fileType?.startsWith('image') || attachment.fileType === 'image';
     
     // Size formatter
     const formatSize = (bytes) => {
@@ -13,6 +14,8 @@ const AttachmentCard = ({ attachment, onRemove, onOpen }) => {
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
     };
+
+    const attachmentUrl = fixUrl(attachment.url);
 
     return (
         <motion.div 
@@ -25,7 +28,7 @@ const AttachmentCard = ({ attachment, onRemove, onOpen }) => {
             <div className="h-28 w-full bg-slate-50 flex items-center justify-center relative overflow-hidden">
                 {isImage ? (
                     <img 
-                        src={attachment.url} 
+                        src={attachmentUrl} 
                         alt={attachment.name} 
                         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
@@ -47,7 +50,7 @@ const AttachmentCard = ({ attachment, onRemove, onOpen }) => {
                         {isImage ? <Eye size={16} /> : <ExternalLink size={16} />}
                     </button>
                     <a 
-                        href={attachment.url} 
+                        href={attachmentUrl} 
                         download={attachment.name}
                         target="_blank"
                         rel="noreferrer"

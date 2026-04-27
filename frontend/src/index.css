@@ -247,6 +247,28 @@
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #cbd5e1;
   }
+
+  /* Premium Glassmorphism */
+  .glass-premium {
+    @apply bg-white/70 backdrop-blur-xl border border-white/40 shadow-2xl shadow-slate-200/50;
+  }
+
+  /* Responsive Animations */
+  @keyframes slide-up {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  .animate-slide-up {
+    animation: slide-up 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  .animate-float {
+    animation: float 6s infinite ease-in-out;
+  }
 }
 
 /* --- Blueprint Attachment Styles --- */

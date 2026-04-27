@@ -10,6 +10,7 @@ import AttachmentGallery from './AttachmentGallery';
 import LinkedNotesDisplay from './LinkedNotesDisplay';
 import { updateNoteLocally, updateNote, setSaveStatus, uploadAttachment, removeAttachment } from '../../store/notesSlice';
 import { Paperclip, Mic, Image as ImageIcon, Loader2, Sparkles, RefreshCw } from 'lucide-react';
+import { fixUrl } from '../../utils/urlHelper';
 
 import Tesseract from 'tesseract.js';
 
@@ -33,6 +34,7 @@ const NoteEditor = () => {
 
   // Voice & OCR State
   const [isListening, setIsListening] = useState(false);
+  const isListeningRef = useRef(false); // Persistent ref for event handlers
   const [interimTranscript, setInterimTranscript] = useState('');
   const [isOcrLoading, setIsOcrLoading] = useState(false);
   const [ocrSuccess, setOcrSuccess] = useState(false);
@@ -40,15 +42,12 @@ const NoteEditor = () => {
   const [ocrFilePreview, setOcrFilePreview] = useState(null);
   const [ocrProgress, setOcrProgress] = useState(0);
 
-
-
-
   // Initialize Speech Recognition
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   const recognition = useRef(null);
 
   useEffect(() => {
-    if (SpeechRecognition) {
+    if (SpeechRecognition && !recognition.current) {
       recognition.current = new SpeechRecognition();
       recognition.current.continuous = true;
       recognition.current.interimResults = true;
@@ -70,23 +69,32 @@ const NoteEditor = () => {
         setInterimTranscript(currentInterim);
 
         if (finalTranscript && editorRef.current) {
-          editorRef.current.chain().focus().insertContent(finalTranscript).run();
+          // IMPORTANT: Insert content without forcing focus on mobile 
+          // to prevent keyboard from popping up and killing the mic session.
+          editorRef.current.commands.insertContent(finalTranscript);
         }
       };
-
 
       recognition.current.onerror = (event) => {
         console.error('Speech Recognition Error:', event.error);
-        setIsListening(false);
+        if (event.error !== 'no-speech') {
+          setIsListening(false);
+          isListeningRef.current = false;
+        }
       };
 
       recognition.current.onend = () => {
-        if (isListening) {
-          recognition.current.start();
+        // Restart if we are still supposed to be listening (common on mobile)
+        if (isListeningRef.current) {
+          try {
+            recognition.current.start();
+          } catch (e) {
+            console.error('Failed to restart recognition:', e);
+          }
         }
       };
     }
-  }, [SpeechRecognition, isListening]);
+  }, [SpeechRecognition]);
 
   const toggleVoice = () => {
     if (!recognition.current) {
@@ -95,12 +103,22 @@ const NoteEditor = () => {
     }
 
     if (isListening) {
-      recognition.current.stop();
+      isListeningRef.current = false;
       setIsListening(false);
+      recognition.current.stop();
       setInterimTranscript('');
     } else {
-      recognition.current.start();
+      // Clear before starting
+      setInterimTranscript('');
+      isListeningRef.current = true;
       setIsListening(true);
+      
+      try {
+        recognition.current.start();
+      } catch (e) {
+        console.error('Start error:', e);
+        // If already started, just ensure state is sync
+      }
     }
   };
 
@@ -119,18 +137,18 @@ const NoteEditor = () => {
     reader.onload = (e) => setOcrFilePreview(e.target.result);
     reader.readAsDataURL(file);
 
+    let worker = null;
     try {
-        const { data: { text } } = await Tesseract.recognize(
-            file,
-            'eng',
-            { 
-              logger: m => {
-                if (m.status === 'recognizing text') {
-                  setOcrProgress(Math.round(m.progress * 100));
-                }
-              } 
+        // Use createWorker for more robust lifecycle on mobile
+        worker = await Tesseract.createWorker('eng', 1, {
+          logger: m => {
+            if (m.status === 'recognizing text') {
+              setOcrProgress(Math.round(m.progress * 100));
             }
-        );
+          }
+        });
+
+        const { data: { text } } = await worker.recognize(file);
 
         if (text && editorRef.current) {
           editorRef.current.chain().focus().insertContent(`\n${text}\n`).run();
@@ -140,17 +158,22 @@ const NoteEditor = () => {
           setOcrSuccess(true);
           
           console.log('✅ Text Extracted Successfully');
+        } else if (!text) {
+          alert('No text detected in this image.');
         }
     } catch (err) {
         console.error('OCR Error:', err);
-        alert('Failed to extract text from image.');
+        alert('Failed to extract text. This might be due to low memory on your device.');
     } finally {
+        if (worker) {
+          await worker.terminate();
+        }
         setIsOcrLoading(false);
         setOcrProgress(0);
         setTimeout(() => {
             setOcrSuccess(false);
             setOcrFilePreview(null);
-        }, 3000); // Persist success for 3 seconds
+        }, 3000);
     }
   };
 
@@ -252,7 +275,7 @@ const NoteEditor = () => {
           // Image? Insert it directly into the TipTap editor flow
           if (file.type.startsWith('image/') && editorRef.current) {
               const newAttachment = result.note.attachments[result.note.attachments.length - 1];
-              editorRef.current.chain().focus().setImage({ src: newAttachment.url }).run();
+              editorRef.current.chain().focus().setImage({ src: fixUrl(newAttachment.url) }).run();
           }
 
           console.log('✅ File Attached Successfully');
@@ -314,7 +337,7 @@ const NoteEditor = () => {
               <AttachmentGallery 
                 attachments={currentNote.attachments} 
                 onRemove={handleRemoveAttachment}
-                onOpen={(att) => window.open(att.url, '_blank')}
+                onOpen={(att) => window.open(fixUrl(att.url), '_blank')}
               />
 
               {/* Linked Notes (Connections) */}

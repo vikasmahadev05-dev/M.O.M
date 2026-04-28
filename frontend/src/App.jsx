@@ -22,12 +22,17 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+import GoogleCallback from './pages/GoogleCallback';
+
 function App() {
   return (
     <Routes>
       {/* Auth Routes */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      
+      {/* Public/Special Routes */}
+      <Route path="/api/google/callback" element={<GoogleCallback />} />
 
       {/* Main App Routes (Protected) */}
       <Route 

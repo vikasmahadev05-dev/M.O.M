@@ -31,24 +31,42 @@ exports.getAuthUrl = (userId) => {
  * Handle callback from Google and save tokens
  */
 exports.saveTokensFromCode = async (userId, code) => {
+  console.log('Initiating token exchange for user:', userId);
+  
   const client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
     process.env.GOOGLE_REDIRECT_URI
   );
-  const { tokens } = await client.getToken(code);
-  
-  const updateData = {
-    googleConnected: true,
-    googleAccessToken: tokens.access_token,
-  };
 
-  if (tokens.refresh_token) {
-    updateData.googleRefreshToken = tokens.refresh_token;
+  try {
+    const { tokens } = await client.getToken(code);
+    console.log('Successfully received tokens from Google');
+    
+    const updateData = {
+      googleConnected: true,
+      googleAccessToken: tokens.access_token,
+    };
+
+    if (tokens.refresh_token) {
+      console.log('Refresh token received and will be saved');
+      updateData.googleRefreshToken = tokens.refresh_token;
+    } else {
+      console.warn('No refresh token received. User may need to re-authorize with prompt=consent');
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(userId, updateData, { new: true });
+    if (!updatedUser) {
+      console.error('User not found in database during token save:', userId);
+      throw new Error('User not found during token save');
+    }
+
+    console.log('User tokens updated successfully in DB');
+    return tokens;
+  } catch (error) {
+    console.error('Error in saveTokensFromCode:', error.message);
+    throw error;
   }
-
-  await User.findByIdAndUpdate(userId, updateData);
-  return tokens;
 };
 
 /**

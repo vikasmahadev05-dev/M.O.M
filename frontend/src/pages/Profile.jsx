@@ -24,7 +24,45 @@ const SettingItem = ({ icon, title, description, color }) => (
   </div>
 );
 
+import { playSound, isSoundEnabled } from '../utils/sound';
+
 const Profile = () => {
+  const triggerTestNotification = () => {
+    // 1. Play Sound (Using central utility)
+    playSound();
+
+    // 2. Trigger Haptic (Vibration)
+    const canVibrate = !!navigator.vibrate;
+    if (canVibrate) {
+      navigator.vibrate([200, 100, 200]);
+    }
+
+    // 3. Show Toast
+    import('sonner').then(({ toast }) => {
+      const soundStatus = isSoundEnabled();
+      toast.custom((t) => (
+        <div className="bg-white p-6 rounded-[2rem] shadow-2xl border border-slate-100 w-80 space-y-4">
+          <div className="space-y-1">
+            <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Test Notification</p>
+            <h3 className="text-lg font-black text-slate-800 leading-tight">System Check</h3>
+            <p className="text-xs font-bold text-slate-400">
+              {!soundStatus ? "Sound is currently DISABLED in settings." : "Sound triggered via central system."}
+            </p>
+            <p className="text-[10px] text-slate-400 font-medium">
+              {canVibrate ? "Vibration triggered!" : "Vibration not supported on this device."}
+            </p>
+          </div>
+          <button
+            onClick={() => toast.dismiss(t)}
+            className="w-full py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-100"
+          >
+            Dismiss Test
+          </button>
+        </div>
+      ), { duration: 5000 });
+    });
+  };
+
   return (
     <div className="max-w-2xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-10">
       {/* Header / Brand */}
@@ -46,6 +84,23 @@ const Profile = () => {
           <p className="text-sm text-[var(--text-muted)] font-medium">Product Manager • vikas@mom.app</p>
         </div>
       </header>
+
+      {/* Testing Section */}
+      <section className="space-y-6">
+        <h3 className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] px-2">Testing & Verification</h3>
+        <div className="glass-card p-6 flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="space-y-1 text-center sm:text-left">
+            <h4 className="font-bold text-sm text-[var(--text-main)]">Ringing & Vibration</h4>
+            <p className="text-xs text-[var(--text-muted)] font-medium">Verify your audio and haptic feedback is working correctly.</p>
+          </div>
+          <button 
+            onClick={triggerTestNotification}
+            className="px-6 py-3 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-indigo-200 hover:scale-105 active:scale-95 transition-all"
+          >
+            Run Test
+          </button>
+        </div>
+      </section>
 
       {/* Settings Sections */}
       <section className="space-y-6">

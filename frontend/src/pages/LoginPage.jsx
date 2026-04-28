@@ -7,6 +7,8 @@ import { Mail, Lock, Loader2, ArrowRight, Sparkles, BrainCircuit } from 'lucide-
 import { GoogleLogin } from '@react-oauth/google';
 
 
+import { playSound } from '../utils/sound';
+
 const LoginPage = () => {
   const [formData, setFormData] = useState({
     email: '',
@@ -28,7 +30,10 @@ const LoginPage = () => {
     }
 
     if (isSuccess || user) {
-      navigate('/');
+      playSound('click');
+      setTimeout(() => {
+        navigate('/');
+      }, 100);
     }
 
     dispatch(reset());

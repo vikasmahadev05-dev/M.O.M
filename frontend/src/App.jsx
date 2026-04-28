@@ -22,9 +22,17 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+import { initSound } from './utils/sound';
 import GoogleCallback from './pages/GoogleCallback';
+import usePushNotifications from './hooks/usePushNotifications';
 
 function App() {
+  usePushNotifications(); // Background notification setup
+
+  React.useEffect(() => {
+    initSound();
+  }, []);
+
   return (
     <Routes>
       {/* Auth Routes */}

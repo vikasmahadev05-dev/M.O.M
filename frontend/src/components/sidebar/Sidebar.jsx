@@ -41,7 +41,7 @@ const Sidebar = () => {
 
 
   return (
-    <aside className="hidden md:flex w-68 h-screen bg-[var(--sidebar-bg)] border-r border-[var(--border)] flex-col p-6 sticky top-0">
+    <aside className="hidden md:flex sidebar-width h-screen bg-[var(--sidebar-bg)] border-r border-[var(--border)] flex-col p-6 sticky top-0">
       {/* Logo */}
       <div className="flex items-center gap-3 mb-10 px-2">
         <div className="w-10 h-10 bg-[var(--accent)] rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-indigo-100">

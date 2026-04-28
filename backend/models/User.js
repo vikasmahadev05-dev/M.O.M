@@ -39,6 +39,10 @@ const userSchema = new mongoose.Schema({
   googleSyncEnabled: {
     type: Boolean,
     default: false
+  },
+  pushSubscription: {
+    type: Object,
+    default: null
   }
 }, { timestamps: true });
 

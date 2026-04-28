@@ -72,7 +72,8 @@ const SchedulePanel = () => {
   const upcomingItems = [...items]
     .filter(item => {
       const isUpcoming = isAfter(new Date(item.startTime), startOfDay(new Date()));
-      return isUpcoming && item.status !== 'completed';
+      // Filter out Google events from the timeline panel
+      return isUpcoming && item.status !== 'completed' && item.source !== 'google';
     })
     .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
     .slice(0, 5);

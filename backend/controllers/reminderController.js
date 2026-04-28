@@ -80,13 +80,16 @@ exports.triggerReminder = async (req, res) => {
 
     // Send Push Notification
     if (reminder.type === 'push' || reminder.type === 'both') {
-      // Assuming user token is available via some user service/model
-      const userToken = "MOCK_TOKEN"; 
-      await firebaseService.sendPushNotification(
-        userToken, 
-        "Reminder", 
-        `${reminder.eventId.title} starts in ${reminder.offsetValue} ${reminder.offsetUnit}`
-      );
+      const notificationController = require('./notificationController');
+      // Pass the user ID associated with this event
+      const userId = reminder.eventId?.userId || reminder.userId; 
+      if (userId) {
+        await notificationController.sendNotification(
+          userId, 
+          "M.O.M Reminder", 
+          `${reminder.eventId.title} starts in ${reminder.offsetValue} ${reminder.offsetUnit}`
+        );
+      }
     }
 
     reminder.status = 'triggered';

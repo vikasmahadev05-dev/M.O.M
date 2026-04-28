@@ -63,6 +63,7 @@ app.use('/api/calendar', calendarRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/reminders', require('./routes/reminderRoutes'));
 app.use('/api/google', require('./routes/googleRoutes'));
+app.use('/api/notifications', require('./routes/notificationRoutes'));
 
 
 /**

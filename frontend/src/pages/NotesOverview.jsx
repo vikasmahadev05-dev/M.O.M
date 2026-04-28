@@ -56,65 +56,77 @@ const NotesOverview = () => {
 
 
   return (
-    <div className="min-h-screen animate-in fade-in duration-500 pb-20 px-4 md:px-8">
+    <div className="animate-in fade-in duration-500 pb-20">
 
       {/* Premium Header Container */}
-      <header className="mb-8 md:mb-12 pt-6 md:pt-10">
-
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-1">
-            <h1 className="text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
-              Notes <Sparkles className="text-indigo-400" size={24} />
+      <header className="header-spacing pt-10">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-10">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-black text-[#1F2937] tracking-tighter flex items-center gap-4">
+              Notes <Sparkles className="text-amber-400 fill-amber-400" size={24} />
             </h1>
-            <p className="text-slate-400 text-sm font-medium">Capture your onus, connect your thoughts.</p>
+            <p className="text-[#6B7280] text-sm font-semibold">Capture your onus, connect your thoughts.</p>
           </div>
           
           <button 
             onClick={handleCreateNote}
-            className="flex items-center justify-center gap-2 px-6 py-3.5 bg-indigo-500 text-white rounded-[1.4rem] font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-600 hover:shadow-indigo-200 transition-all active:scale-95"
+            className="flex items-center justify-center gap-3 text-white font-black hover:scale-105 transition-all active:scale-95 primary-btn-size new-note-btn"
           >
-            <Plus size={20} strokeWidth={3} />
+            <Plus size={20} strokeWidth={4} />
             <span>New Note</span>
           </button>
         </div>
 
         {/* Search and Filters Row */}
-        <div className="flex flex-col lg:flex-row gap-4 items-center">
-          <div className="relative flex-1 group w-full">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-400 transition-colors" size={18} />
+        <div className="flex flex-col lg:flex-row gap-6 items-center">
+          <div className="relative flex-[2] group w-full">
+            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-amber-500 transition-colors" size={20} />
             <input 
               type="text"
               placeholder="Search through your mind..."
               value={searchQuery}
               onChange={(e) => dispatch(setSearchQuery(e.target.value))}
-              className="w-full pl-12 pr-4 py-4 bg-white border border-slate-100 rounded-[1.5rem] text-sm focus:outline-none focus:border-indigo-100 focus:ring-4 focus:ring-indigo-50/50 shadow-sm transition-all"
+              className="w-full pl-14 pr-6 border-none rounded-full focus:outline-none focus:ring-8 focus:ring-amber-100/30 transition-all placeholder:text-slate-300 font-bold search-glass search-bar-size"
             />
           </div>
 
-          <div className="flex items-center gap-2 w-full lg:w-auto overflow-x-auto hide-scrollbar pb-2 lg:pb-0">
-            {dynamicTags.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setFilter(cat)}
-                className={`px-5 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
-                  filter === cat 
-                  ? 'bg-indigo-500 text-white shadow-md' 
-                  : 'bg-white text-slate-400 hover:bg-slate-50 border border-slate-50'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
+          <div className="flex flex-[3] items-center gap-3 w-full lg:w-auto overflow-x-auto hide-scrollbar">
+            {dynamicTags.map((cat) => {
+              const isActive = filter === cat;
+              let baseColors = 'bg-white text-slate-400 hover:bg-slate-50';
+              let activeColors = '';
+              
+              if (cat === 'All') {
+                baseColors = 'bg-[#FEF9C3] text-amber-700 hover:bg-[#FDE68A]';
+                activeColors = 'bg-[#FDE68A] text-amber-900 shadow-lg shadow-amber-200/50 scale-110';
+              } else if (cat === 'Project') {
+                baseColors = 'bg-[#DCFCE7] text-green-700 hover:bg-[#BBF7D0]';
+                activeColors = 'bg-[#BBF7D0] text-green-900 shadow-lg shadow-green-200/50 scale-110';
+              } else if (cat === 'Movie') {
+                baseColors = 'bg-[#DBEAFE] text-blue-700 hover:bg-[#BFDBFE]';
+                activeColors = 'bg-[#BFDBFE] text-blue-900 shadow-lg shadow-blue-200/50 scale-110';
+              }
 
-            <button className="p-3 bg-white border border-slate-50 rounded-2xl text-slate-400 hover:bg-slate-50 shadow-sm ml-2">
-              <Filter size={18} />
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setFilter(cat)}
+                  className={`px-8 py-3 rounded-2xl text-[12px] font-black transition-all whitespace-nowrap uppercase tracking-widest ${isActive ? activeColors : baseColors}`}
+                >
+                  {cat}
+                </button>
+              );
+            })}
+
+            <button className="p-4 bg-white/50 backdrop-blur-xl border-none rounded-2xl text-slate-400 hover:bg-white hover:text-slate-600 shadow-[0_8px_20px_rgba(0,0,0,0.03)] transition-all shrink-0">
+              <Filter size={20} />
             </button>
           </div>
         </div>
       </header>
 
       {/* Masonry Grid */}
-      <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6">
+      <div className="notes-grid-config">
         {filteredNotes.length > 0 ? (
           filteredNotes.map((note) => (
             <NoteCard key={note._id} note={note} />

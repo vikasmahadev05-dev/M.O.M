@@ -5,7 +5,8 @@ import axios from 'axios';
 import { setView, setSelectedDate, setGoogleConnected, toggleGoogleSync, fetchGoogleEvents, disconnectGoogle } from '../../store/calendarSlice';
 import { format, addMonths, subMonths, addWeeks, subWeeks, addDays, subDays } from 'date-fns';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const API_URL = `${API_BASE_URL}/api`;
 
 const CalendarControls = () => {
   const dispatch = useDispatch();

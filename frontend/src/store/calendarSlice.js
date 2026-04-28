@@ -1,7 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api/calendar';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const API_URL = `${API_BASE_URL}/api/calendar`;
 
 export const fetchCalendarItems = createAsyncThunk(
   'calendar/fetchItems',
@@ -84,7 +85,7 @@ export const toggleGoogleSync = createAsyncThunk(
     try {
       const token = getState().auth.user?.token;
       const config = { headers: { Authorization: `Bearer ${token}` } };
-      const response = await axios.post('http://localhost:5000/api/google/toggle-sync', { enabled }, config);
+      const response = await axios.post(`${API_BASE_URL}/api/google/toggle-sync`, { enabled }, config);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data);
@@ -99,7 +100,7 @@ export const checkGoogleStatus = createAsyncThunk(
       const token = getState().auth.user?.token;
       const config = { headers: { Authorization: `Bearer ${token}` } };
       // We'll add this endpoint to backend
-      const response = await axios.get('http://localhost:5000/api/google/status', config);
+      const response = await axios.get(`${API_BASE_URL}/api/google/status`, config);
       return response.data; // { connected: true/false }
     } catch (error) {
       return rejectWithValue(error.response?.data);
@@ -113,7 +114,7 @@ export const disconnectGoogle = createAsyncThunk(
     try {
       const token = getState().auth.user?.token;
       const config = { headers: { Authorization: `Bearer ${token}` } };
-      const response = await axios.post('http://localhost:5000/api/google/disconnect', {}, config);
+      const response = await axios.post(`${API_BASE_URL}/api/google/disconnect`, {}, config);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data);
@@ -127,7 +128,7 @@ export const fetchGoogleEvents = createAsyncThunk(
     try {
       const token = getState().auth.user?.token;
       const config = { headers: { Authorization: `Bearer ${token}` } };
-      const response = await axios.get('http://localhost:5000/api/google/events', config);
+      const response = await axios.get(`${API_BASE_URL}/api/google/events`, config);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data);

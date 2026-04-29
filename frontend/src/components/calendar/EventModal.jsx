@@ -51,7 +51,7 @@ const EventModal = ({ isOpen, onClose, onSave, onDelete, initialData }) => {
             <input
               type="text"
               required
-              className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+              className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 outline-none transition-all"
               placeholder="Event title..."
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
@@ -66,7 +66,7 @@ const EventModal = ({ isOpen, onClose, onSave, onDelete, initialData }) => {
                 type="button"
                 className={`py-2 rounded-xl text-sm font-bold capitalize transition-all ${
                   formData.type === type 
-                    ? 'bg-indigo-600 text-white shadow-md' 
+                    ? 'bg-gradient-to-r from-[#F59E0B] to-[#D97706] text-white shadow-md' 
                     : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                 }`}
                 onClick={() => setFormData({ ...formData, type })}
@@ -85,7 +85,7 @@ const EventModal = ({ isOpen, onClose, onSave, onDelete, initialData }) => {
               <input
                 type="datetime-local"
                 required
-                className="w-full px-4 py-2 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                className="w-full px-4 py-2 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-orange-500 outline-none transition-all"
                 value={formData.startTime}
                 onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
               />
@@ -97,7 +97,7 @@ const EventModal = ({ isOpen, onClose, onSave, onDelete, initialData }) => {
               <input
                 type="datetime-local"
                 required
-                className="w-full px-4 py-2 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                className="w-full px-4 py-2 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-orange-500 outline-none transition-all"
                 value={formData.endTime}
                 onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
               />
@@ -111,7 +111,7 @@ const EventModal = ({ isOpen, onClose, onSave, onDelete, initialData }) => {
                 <Flag size={14} /> Priority
               </label>
               <select
-                className="w-full px-4 py-2 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                className="w-full px-4 py-2 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-orange-500 outline-none transition-all"
                 value={formData.priority}
                 onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
               >
@@ -125,7 +125,7 @@ const EventModal = ({ isOpen, onClose, onSave, onDelete, initialData }) => {
                 <Repeat size={14} /> Recurrence
               </label>
               <select
-                className="w-full px-4 py-2 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                className="w-full px-4 py-2 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-orange-500 outline-none transition-all"
                 value={formData.recurrence}
                 onChange={(e) => setFormData({ ...formData, recurrence: e.target.value })}
               >
@@ -157,16 +157,27 @@ const EventModal = ({ isOpen, onClose, onSave, onDelete, initialData }) => {
             </div>
           </div>
 
-          {/* Description */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Description</label>
+          {/* Notes (Linked to Note System) */}
+          <div className="pt-2">
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-black uppercase tracking-widest text-slate-400">Notes</label>
+              {initialData?.linkedNoteId && (
+                <div className="flex items-center gap-1.5 px-3 py-1 bg-orange-50 text-[10px] font-black text-orange-500 uppercase tracking-widest rounded-full">
+                  <Sparkles size={10} />
+                  Synced to Notes
+                </div>
+              )}
+            </div>
             <textarea
-              className="w-full px-4 py-2 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none"
-              rows="3"
-              placeholder="Add more details..."
+              className="w-full px-5 py-4 rounded-3xl bg-slate-50 border-none text-sm font-semibold text-slate-600 focus:ring-2 focus:ring-orange-100 outline-none transition-all resize-none shadow-inner min-h-[120px]"
+              placeholder="Start typing notes for this item... these will automatically appear in your Notes section."
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             />
+            <p className="mt-3 text-[10px] font-bold text-slate-300 uppercase tracking-widest flex items-center gap-2">
+               <Tag size={10} />
+               Changes are saved in real-time
+            </p>
           </div>
         </form>
 
@@ -192,7 +203,7 @@ const EventModal = ({ isOpen, onClose, onSave, onDelete, initialData }) => {
             </button>
             <button
               onClick={handleSubmit}
-              className="px-6 py-2 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-100 hover:scale-105 transition-all font-bold text-sm"
+              className="px-6 py-2 bg-[#FED7AA] text-orange-900/70 rounded-xl shadow-sm shadow-orange-100/40 hover:scale-105 transition-all font-bold text-sm border border-orange-200/50"
             >
               Save Changes
             </button>

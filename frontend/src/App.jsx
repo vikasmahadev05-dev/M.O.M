@@ -25,6 +25,7 @@ const ProtectedRoute = ({ children }) => {
 import { initSound } from './utils/sound';
 import GoogleCallback from './pages/GoogleCallback';
 import usePushNotifications from './hooks/usePushNotifications';
+import { Toaster } from 'sonner';
 
 function App() {
   usePushNotifications(); // Background notification setup
@@ -34,7 +35,9 @@ function App() {
   }, []);
 
   return (
-    <Routes>
+    <>
+      <Toaster position="top-right" richColors closeButton />
+      <Routes>
       {/* Auth Routes */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
@@ -62,7 +65,8 @@ function App() {
           </ProtectedRoute>
         } 
       />
-    </Routes>
+      </Routes>
+    </>
   );
 }
 

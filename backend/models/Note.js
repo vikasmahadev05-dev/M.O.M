@@ -62,7 +62,11 @@ const noteSchema = new mongoose.Schema({
     fileType: { type: String, required: true }, // 'image', 'pdf', 'doc', etc.
     size: Number,
     uploadedAt: { type: Date, default: Date.now }
-  }]
+  }],
+  linkedEventId: {
+    type: String,
+    default: null
+  }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Note', noteSchema);

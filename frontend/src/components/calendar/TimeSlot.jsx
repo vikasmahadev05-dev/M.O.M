@@ -11,7 +11,7 @@ const TimeSlot = ({ hour, minute, date, onSlotClick }) => {
   return (
     <div 
       ref={setNodeRef}
-      className={`h-full transition-colors ${isOver ? 'bg-indigo-100/50' : 'hover:bg-indigo-50/30'}`}
+      className={`h-full transition-colors ${isOver ? 'bg-orange-100/50' : 'hover:bg-orange-50/30'}`}
       onClick={() => {
         const d = new Date(date);
         d.setHours(hour, minute);

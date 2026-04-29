@@ -14,7 +14,7 @@ const NotificationToast = ({ reminder, onSnooze, onDismiss }) => {
     >
       <div className="p-6 space-y-4">
         <div className="flex items-start justify-between">
-          <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
+          <div className="p-3 bg-orange-50 text-orange-600 rounded-2xl">
             <Bell size={24} />
           </div>
           <button onClick={onDismiss} className="p-2 hover:bg-slate-50 rounded-xl text-slate-300 transition-all">
@@ -23,7 +23,7 @@ const NotificationToast = ({ reminder, onSnooze, onDismiss }) => {
         </div>
 
         <div className="space-y-1">
-          <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Upcoming Event</p>
+          <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest">Upcoming Event</p>
           <h3 className="text-lg font-black text-slate-800 leading-tight">
             {reminder.eventId?.title || "Reminder"}
           </h3>
@@ -42,7 +42,7 @@ const NotificationToast = ({ reminder, onSnooze, onDismiss }) => {
           </button>
           <button
             onClick={onDismiss}
-            className="flex-1 py-3 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all"
+            className="flex-1 py-3 bg-gradient-to-r from-[#F59E0B] to-[#D97706] text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-orange-100 hover:scale-[1.02] transition-all"
           >
             Dismiss
           </button>
@@ -54,7 +54,7 @@ const NotificationToast = ({ reminder, onSnooze, onDismiss }) => {
         initial={{ width: "100%" }}
         animate={{ width: "0%" }}
         transition={{ duration: 15, ease: "linear" }}
-        className="h-1 bg-indigo-200"
+        className="h-1 bg-orange-200"
       />
     </motion.div>
   );

@@ -1,109 +1,139 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { format, isSameDay, startOfWeek, addDays, isToday } from 'date-fns';
-import EventCard from './EventCard';
-import { getTimeSlotPosition, getEventDurationMinutes } from '../../utils/dateUtils';
-import TimeSlot from './TimeSlot';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const WeekView = ({ date, items, onEventClick, onSlotClick }) => {
+const WeekView = ({ date, items, onEventClick, onDayClick }) => {
+  const [hoveredIdx, setHoveredIdx] = useState(null);
   const weekStart = startOfWeek(date);
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-  const hours = Array.from({ length: 24 }, (_, i) => i);
+
+  // Goldish White Zen palette
+  const pastelColors = [
+    'bg-[#FFFFFF]', // Pure White
+    'bg-[#FFFEF9]', // Ivory
+    'bg-[#FFFDF0]', // Cream
+    'bg-[#FFFBF2]', // Soft Gold
+    'bg-[#FFF9EA]', // Champagne
+    'bg-[#FEFCE8]', // Yellow-50
+    'bg-[#FFFBEB]'  // Amber-50
+  ];
 
   return (
-    <div className="flex flex-col h-[600px] bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
-      {/* Week Header */}
-      <div className="flex border-b border-gray-100 bg-gray-50/50">
-        <div className="w-16 border-r border-gray-50" />
-        {weekDays.map(day => (
-          <div key={day.toString()} className="flex-1 py-3 text-center border-r border-gray-50 last:border-r-0">
-            <div className={`text-[10px] font-bold uppercase tracking-wider ${isToday(day) ? 'text-indigo-600' : 'text-gray-400'}`}>
-              {format(day, 'EEE')}
-            </div>
-            <div className={`text-xl font-black mt-0.5 ${isToday(day) ? 'text-indigo-600' : 'text-gray-800'}`}>
-              {format(day, 'd')}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="flex-1 overflow-y-auto custom-scrollbar relative">
-        <div className="flex min-h-[1440px] relative">
-          {/* Time Labels */}
-          <div className="w-16 border-r border-gray-50 bg-gray-50/30 sticky left-0 z-20">
-            {hours.map(hour => (
-              <div key={hour} className="h-[60px] text-[10px] font-bold text-gray-400 text-right pr-2 pt-1">
-                {format(new Date().setHours(hour, 0), 'HH:mm')}
-              </div>
-            ))}
-          </div>
-
-          {/* Day Columns */}
-          <div className="flex-1 flex relative">
-            {weekDays.map(day => {
-              const dayItems = items.filter(item => 
-                isSameDay(new Date(item.startTime), day) && 
-                !(item.type === 'reminder' && item.status === 'completed')
-              );
-              
-              return (
-                <div key={day.toString()} className="flex-1 border-r border-gray-50 last:border-r-0 relative group">
-                  {/* Grid Lines */}
-                  {hours.map(hour => (
-                    <div key={hour} className="h-[60px] border-b border-gray-50/50">
-                      <div className="h-1/2 border-b border-dashed border-gray-50/30">
-                        <TimeSlot hour={hour} minute={0} date={day} onSlotClick={onSlotClick} />
-                      </div>
-                      <div className="h-1/2">
-                        <TimeSlot hour={hour} minute={30} date={day} onSlotClick={onSlotClick} />
-                      </div>
-                    </div>
-                  ))}
-
-                  {/* Current Time Line (only on today's column) */}
-                  {isToday(day) && (
-                    <div 
-                      className="absolute left-0 right-0 z-10 border-t-2 border-red-500 pointer-events-none"
-                      style={{ top: `${getTimeSlotPosition(new Date())}px` }}
-                    />
-                  )}
-
-                  {/* Events */}
-                  {dayItems.map((item, idx) => {
-                    const top = getTimeSlotPosition(item.startTime);
-                    const height = getEventDurationMinutes(item.startTime, item.endTime);
-                    
-                    const overlaps = dayItems.filter(other => 
-                      other._id !== item._id && 
-                      new Date(other.startTime) < new Date(item.endTime) &&
-                      new Date(other.endTime) > new Date(item.startTime)
-                    );
-                    
-                    const column = overlaps.filter(o => dayItems.indexOf(o) < idx).length;
-                    const totalColumns = overlaps.length + 1;
-                    const width = 100 / totalColumns;
-                    const left = column * width;
-
-                    return (
-                      <div 
-                        key={item._id}
-                        className="absolute z-10 pr-0.5"
-                        style={{ 
-                          top: `${top}px`, 
-                          height: `${height}px`,
-                          left: `${left}%`,
-                          width: `${width}%`,
-                          minHeight: '20px'
-                        }}
-                      >
-                        <EventCard item={item} onClick={onEventClick} compact={height < 40} />
-                      </div>
-                    );
-                  })}
+    <div className="flex flex-col bg-transparent p-4 pb-4">
+      <div className="overflow-x-auto no-scrollbar -mx-4 px-4">
+        <motion.div 
+          layout
+          className="flex gap-4 md:gap-6 min-w-max md:min-w-0 md:grid md:grid-cols-7 h-[280px] md:h-[420px] items-stretch py-4 px-4"
+        >
+          {weekDays.map((day, idx) => {
+            const dayItems = items.filter(item => 
+              isSameDay(new Date(item.startTime), day) && 
+              !(item.type === 'reminder' && item.status === 'completed')
+            );
+            const today = isToday(day);
+            const isHovered = hoveredIdx === idx;
+            const bgColor = pastelColors[idx % pastelColors.length];
+            
+            return (
+              <motion.div 
+                key={day.toString()}
+                onHoverStart={() => setHoveredIdx(idx)}
+                onHoverEnd={() => setHoveredIdx(null)}
+                onClick={() => onDayClick(day)}
+                layout
+                animate={{ 
+                  scale: isHovered ? 1.05 : 1,
+                  zIndex: isHovered ? 50 : 1,
+                  y: isHovered ? -4 : 0,
+                  boxShadow: isHovered ? "0 20px 40px rgba(0,0,0,0.05)" : "0 4px 10px rgba(0,0,0,0.02)"
+                }}
+                whileTap={{ scale: 1.05 }}
+                transition={{ 
+                  type: "spring", 
+                  stiffness: 150, 
+                  damping: 25 
+                }}
+                className={`
+                  w-[140px] md:w-auto relative p-3 md:p-4 rounded-[2.5rem] border border-black/[0.03] flex flex-col items-center gap-3 cursor-pointer
+                  ${bgColor} transition-colors duration-300
+                `}
+              >
+                {/* Day Header */}
+                <div className="flex flex-col items-center gap-1">
+                  <span className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">
+                    {format(day, 'EEE')}
+                  </span>
+                  <span className={`
+                    text-base md:text-xl font-black w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full transition-all
+                    ${today 
+                      ? 'bg-[#1e293b] text-white shadow-lg' 
+                      : 'text-slate-800'}
+                  `}>
+                    {format(day, 'd')}
+                  </span>
                 </div>
-              );
-            })}
-          </div>
-        </div>
+
+                {/* Aesthetic Event Info Reveal */}
+                <div className="flex-1 w-full flex flex-col items-center justify-center gap-2 overflow-hidden">
+                  <AnimatePresence mode="wait">
+                    {isHovered ? (
+                      <motion.div 
+                        key="details"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="w-full space-y-1.5"
+                      >
+                        {dayItems.slice(0, 3).map((item, i) => (
+                          <motion.div 
+                            key={item._id || i}
+                            initial={{ x: -10, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            transition={{ delay: i * 0.05 }}
+                            className="flex items-center gap-2 bg-white/40 backdrop-blur-sm p-1 rounded-xl border border-white/50"
+                          >
+                            <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: item.colorTag || '#9333ea' }} />
+                            <span className="text-[8px] font-bold text-slate-700 truncate leading-tight">
+                              {item.title}
+                            </span>
+                          </motion.div>
+                        ))}
+                        {dayItems.length > 3 && (
+                          <p className="text-[7px] font-black text-slate-400 text-center uppercase tracking-widest">
+                            + {dayItems.length - 3}
+                          </p>
+                        )}
+                      </motion.div>
+                    ) : (
+                      <motion.div 
+                        key="dots"
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        className="flex flex-wrap gap-1.5 justify-center py-2"
+                      >
+                        {dayItems.slice(0, 6).map((item, i) => (
+                          <div 
+                            key={item._id || i}
+                            className="w-1.5 h-1.5 rounded-full shadow-inner border border-white/30"
+                            style={{ backgroundColor: item.colorTag || '#9333ea' }}
+                          />
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Bottom Indicator */}
+                <div className="pt-2 border-t border-black/[0.03] w-full flex justify-center">
+                  <span className="text-[8px] font-black text-slate-400/60 uppercase tracking-widest">
+                    {format(day, 'MMM')}
+                  </span>
+                </div>
+              </motion.div>
+            );
+          })}
+        </motion.div>
       </div>
     </div>
   );

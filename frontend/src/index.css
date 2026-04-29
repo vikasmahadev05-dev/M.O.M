@@ -295,7 +295,6 @@ html {
   .premium-card {
     position: relative;
     border-radius: 24px;
-    overflow: hidden;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 10px 30px rgba(0,0,0,0.03);
   }
@@ -739,8 +738,38 @@ html {
     gap: 32px;
     width: 100%;
   }
+
+  @media (max-width: 640px) {
+    .notes-grid-config {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+  }
+
   .primary-btn-size { padding: 10px 18px !important; font-size: 14px !important; border-radius: 12px !important; }
   .search-bar-size { height: 44px !important; max-width: 500px !important; font-size: 14px !important; }
   .section-spacing { margin-bottom: 24px; }
   .header-spacing { margin-bottom: 20px; }
+
+  /* Mobile-Specific Utilities */
+  .mobile-only { @apply lg:hidden; }
+  .desktop-only { @apply hidden lg:block; }
+  
+  .horizontal-scroll {
+    @apply flex overflow-x-auto hide-scrollbar scroll-smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .bottom-sheet-up {
+    animation: bottom-sheet-slide 0.5s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  @keyframes bottom-sheet-slide {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  .glass-card-mobile {
+    @apply bg-white/90 backdrop-blur-2xl border-t border-white/50 shadow-[0_-10px_40px_rgba(0,0,0,0.05)];
+  }
 }

@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { format, isSameMonth, isSameDay, isToday, startOfMonth, startOfWeek, endOfWeek, endOfMonth, eachDayOfInterval } from 'date-fns';
-import EventCard from './EventCard';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const MonthView = ({ date, items, onEventClick, onDayClick }) => {
+  const [hoveredDate, setHoveredDate] = useState(null);
   const monthStart = startOfMonth(date);
   const monthEnd = endOfMonth(monthStart);
   const startDate = startOfWeek(monthStart);
@@ -11,19 +12,33 @@ const MonthView = ({ date, items, onEventClick, onDayClick }) => {
 
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+  // Goldish White Zen palette
+  const pastelColors = [
+    'bg-[#FFFFFF]', // Pure White
+    'bg-[#FFFEF9]', // Ivory
+    'bg-[#FFFDF0]', // Cream
+    'bg-[#FFFBF2]', // Soft Gold
+    'bg-[#FFF9EA]', // Champagne
+    'bg-[#FEFCE8]', // Yellow-50
+    'bg-[#FFFBEB]'  // Amber-50
+  ];
+
   return (
-    <div className="flex flex-col bg-transparent">
+    <div className="flex flex-col bg-transparent p-2 md:p-6 pb-20">
       {/* Month Header - Day Names */}
-      <div className="grid grid-cols-7 border-b border-slate-100/50 bg-slate-50/30 backdrop-blur-md">
+      <div className="grid grid-cols-7 mb-4 md:mb-6">
         {weekDays.map(day => (
-          <div key={day} className="py-4 text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-            {day}
+          <div key={day} className="py-2 text-center text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-[0.1em] md:tracking-[0.2em]">
+            {day.substring(0, 3)}
           </div>
         ))}
       </div>
 
       {/* Calendar Grid */}
-      <div className="grid grid-cols-7 auto-rows-[80px] md:auto-rows-[140px]">
+      <motion.div 
+        layout
+        className="grid grid-cols-7 gap-1.5 md:gap-6 auto-rows-[60px] md:auto-rows-[120px]"
+      >
         {calendarDays.map((day, idx) => {
           const dayItems = items.filter(item => 
             isSameDay(new Date(item.startTime), day) && 
@@ -31,65 +46,102 @@ const MonthView = ({ date, items, onEventClick, onDayClick }) => {
           );
           const isCurrentMonth = isSameMonth(day, monthStart);
           const today = isToday(day);
+          const isHovered = hoveredDate === day.toString();
+          
+          // Rotate through pastel colors based on day index
+          const bgColor = isCurrentMonth ? pastelColors[idx % pastelColors.length] : 'bg-slate-50/10';
           
           return (
-            <div 
+            <motion.div 
               key={day.toString()}
               onClick={() => onDayClick(day)}
+              onHoverStart={() => setHoveredDate(day.toString())}
+              onHoverEnd={() => setHoveredDate(null)}
+              layout
+              animate={{ 
+                scale: isHovered ? 1.25 : (hoveredDate ? 0.9 : 1),
+                zIndex: isHovered ? 50 : 1,
+                opacity: !isCurrentMonth ? 0.15 : (hoveredDate && !isHovered ? 0.5 : 1),
+                y: isHovered ? -8 : 0
+              }}
+              whileTap={{ scale: 1.25 }}
+              transition={{ 
+                type: "spring", 
+                stiffness: 300, 
+                damping: 25 
+              }}
               className={`
-                relative p-1 md:p-3 border-r border-b border-slate-50 flex flex-col gap-1 transition-all cursor-pointer group
-                ${!isCurrentMonth ? 'bg-slate-50/20 opacity-40' : 'bg-white/40 hover:bg-white hover:shadow-2xl hover:shadow-indigo-500/10 hover:z-10'}
-                ${idx % 7 === 6 ? 'border-r-0' : ''}
+                relative p-1.5 md:p-4 rounded-2xl md:rounded-[2.5rem] border border-black/5 flex flex-col items-center justify-center gap-1 md:gap-4 cursor-pointer
+                ${bgColor} shadow-sm transition-shadow duration-300 ${isHovered ? 'shadow-2xl shadow-orange-200/40' : ''}
               `}
             >
-              <div className="flex justify-between items-center mb-1">
+              <div className="flex flex-col items-center">
                 <span className={`
-                  text-[10px] md:text-sm font-black w-6 h-6 md:w-8 md:h-8 flex items-center justify-center rounded-xl transition-all
+                  text-[10px] md:text-sm font-black w-6 h-6 md:w-9 md:h-9 flex items-center justify-center rounded-full transition-all
                   ${today 
-                    ? 'bg-slate-900 text-white shadow-lg shadow-slate-400/50 scale-110' 
-                    : isCurrentMonth ? 'text-slate-800 group-hover:text-indigo-600' : 'text-slate-300'}
+                    ? 'bg-[#1e293b] text-white shadow-lg md:shadow-2xl scale-110' 
+                    : isCurrentMonth ? 'text-slate-800' : 'text-slate-400'}
                 `}>
                   {format(day, 'd')}
                 </span>
-                
-                {dayItems.length > 0 && (
-                  <div className="hidden md:flex flex-col items-end">
-                    <span className="text-[10px] font-black text-slate-400/60 uppercase tracking-tighter">
-                      {dayItems.length} {dayItems.length === 1 ? 'task' : 'tasks'}
-                    </span>
-                  </div>
-                )}
               </div>
 
-              {/* Mobile View: Dots */}
-              <div className="flex md:hidden flex-wrap gap-1 justify-center mt-1">
-                {dayItems.slice(0, 4).map(item => (
-                  <div 
-                    key={item._id} 
-                    className="w-1.5 h-1.5 rounded-full shadow-sm"
+              {/* Aesthetic Dots for Events */}
+              <div className="flex flex-wrap gap-1 md:gap-2 justify-center max-w-[90%]">
+                {dayItems.slice(0, isHovered ? 8 : 3).map((item, i) => (
+                  <motion.div 
+                    key={item._id || i}
+                    layout
+                    className="w-1.5 h-1.5 md:w-2.5 md:h-2.5 rounded-full shadow-inner border border-white/20"
                     style={{ backgroundColor: item.colorTag || '#9333ea' }}
                   />
                 ))}
-                {dayItems.length > 4 && <div className="w-1 h-1 bg-slate-300 rounded-full" />}
-              </div>
-
-              {/* Desktop View: Full Cards */}
-              <div className="hidden md:flex flex-col gap-1.5 overflow-hidden">
-                {dayItems.slice(0, 3).map(item => (
-                  <div key={item._id} className="transition-transform hover:scale-[1.02]">
-                    <EventCard item={item} onClick={onEventClick} compact={true} />
-                  </div>
-                ))}
-                {dayItems.length > 3 && (
-                  <div className="text-[10px] font-black text-indigo-500 pl-1 uppercase tracking-widest pt-1">
-                    + {dayItems.length - 3} more
+                {!isHovered && dayItems.length > 3 && (
+                  <div className="w-1 h-1 md:w-2.5 md:h-2.5 bg-white/50 rounded-full flex items-center justify-center">
+                    <span className="text-[5px] md:text-[6px] text-slate-800 font-bold">+</span>
                   </div>
                 )}
               </div>
-            </div>
+
+              {/* Hover/Tap Details Indicator - Smart Info Reveal */}
+              <AnimatePresence>
+                {isHovered && dayItems.length > 0 && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: idx >= 28 ? -20 : 20, scale: 0.8 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: idx >= 28 ? -10 : 10, scale: 0.8 }}
+                    className={`
+                      absolute left-1/2 -translate-x-1/2 bg-slate-900/95 backdrop-blur-md text-white p-3 rounded-2xl shadow-2xl z-[150] min-w-[140px] pointer-events-none
+                      ${idx >= 28 ? '-top-2 md:-top-4 -translate-y-full' : '-bottom-2 md:-bottom-4 translate-y-full'}
+                    `}
+                  >
+                    <div className="flex flex-col gap-1.5">
+                      {dayItems.slice(0, 4).map((item, i) => (
+                        <div key={item._id || i} className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: item.colorTag || '#9333ea' }} />
+                          <span className="text-[9px] font-bold truncate max-w-[120px]">
+                            {item.title}
+                          </span>
+                        </div>
+                      ))}
+                      {dayItems.length > 4 && (
+                        <div className="pt-1 border-t border-white/10 text-[7px] font-black uppercase tracking-widest text-slate-400 text-center">
+                          + {dayItems.length - 4} more actions
+                        </div>
+                      )}
+                    </div>
+                    {/* Tiny Arrow */}
+                    <div className={`
+                      absolute left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-900/95 rotate-45
+                      ${idx >= 28 ? '-bottom-1' : '-top-1'}
+                    `} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
           );
         })}
-      </div>
+      </motion.div>
     </div>
   );
 };

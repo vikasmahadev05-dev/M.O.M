@@ -196,11 +196,16 @@ const calendarSlice = createSlice({
         if (itemToDelete) state.lastDeletedItem = itemToDelete;
       })
       .addCase(deleteCalendarItem.fulfilled, (state, action) => {
-        if (action.payload.scope === 'all') {
-          state.items = state.items.filter(item => item._id !== action.payload.id);
-        } else if (action.payload.item) {
-          const index = state.items.findIndex(i => i._id === action.payload.id);
-          if (index !== -1) state.items[index] = action.payload.item;
+        const { id, scope, item } = action.payload;
+        
+        // Remove from local items or Google events if it was a full delete or single item delete
+        if (scope === 'all' || !item) {
+          state.items = state.items.filter(i => i._id !== id);
+          state.googleEvents = state.googleEvents.filter(i => i._id !== id);
+        } else if (item) {
+          // It was a recurring instance exclusion
+          const index = state.items.findIndex(i => i._id === id);
+          if (index !== -1) state.items[index] = item;
         }
       })
       .addCase(updateCalendarItem.fulfilled, (state, action) => {

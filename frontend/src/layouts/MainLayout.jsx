@@ -34,7 +34,7 @@ const MainLayout = ({ children }) => {
       {/* Column 1: Sticky Sidebar (Hidden on mobile) */}
       <Sidebar />
 
-      <main className="flex-1 flex flex-col min-w-0 main-container">
+      <main className="flex-1 flex flex-col min-w-0 main-container md:pl-[288px]">
         <div className="flex-1 overflow-visible w-full">
           {children}
         </div>

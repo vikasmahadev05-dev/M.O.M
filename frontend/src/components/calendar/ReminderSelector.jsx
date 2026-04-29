@@ -38,9 +38,9 @@ const ReminderSelector = ({ reminders, onChange }) => {
 
       <div className="flex flex-wrap gap-2">
         {reminders.map((r, i) => (
-          <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-xl text-[10px] font-black uppercase">
+          <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-orange-50 text-orange-600 rounded-xl text-[10px] font-black uppercase">
             <span>{r.offsetValue} {r.offsetUnit} before</span>
-            <button type="button" onClick={() => removeReminder(i)} className="hover:text-indigo-800 transition-colors">
+            <button type="button" onClick={() => removeReminder(i)} className="hover:text-orange-800 transition-colors">
               <X size={12} />
             </button>
           </div>
@@ -50,7 +50,7 @@ const ReminderSelector = ({ reminders, onChange }) => {
           <button
             type="button"
             onClick={() => setShowCustom(!showCustom)}
-            className="flex items-center gap-1 px-3 py-1.5 border border-dashed border-slate-200 text-slate-400 rounded-xl text-[10px] font-black uppercase hover:border-indigo-300 hover:text-indigo-400 transition-all"
+            className="flex items-center gap-1 px-3 py-1.5 border border-dashed border-slate-200 text-slate-400 rounded-xl text-[10px] font-black uppercase hover:border-orange-300 hover:text-orange-400 transition-all"
           >
             <Plus size={12} /> Add
           </button>
@@ -93,7 +93,7 @@ const ReminderSelector = ({ reminders, onChange }) => {
                   <button
                     type="button"
                     onClick={handleAddCustom}
-                    className="w-full mt-3 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-100"
+                    className="w-full mt-3 py-2 bg-[#FED7AA] text-orange-900/70 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm shadow-orange-100/50"
                   >
                     Add Custom
                   </button>

@@ -1,9 +1,52 @@
 const CalendarItem = require('../models/CalendarItem');
 const Reminder = require('../models/Reminder');
+const Note = require('../models/Note');
 const qstashService = require('../services/qstashService');
 const User = require('../models/User');
 const googleCalendarService = require('../services/googleCalendarService');
 const mongoose = require('mongoose');
+
+// Helper to sync Calendar Item to Note
+const syncToNote = async (item, userId) => {
+  try {
+    const itemDescription = item.description || (item.notes); // Handle different field names
+    if (!itemDescription) return null;
+
+    const itemId = item._id ? item._id.toString() : (item.id || item.googleEventId);
+    const itemTitle = item.title || item.summary || 'Untitled Event';
+
+    // Find note linked to this event
+    let note = await Note.findOne({ userId, linkedEventId: itemId });
+
+    if (note) {
+      // Update existing note
+      note.title = `[Calendar] ${itemTitle}`;
+      note.content = itemDescription;
+      if (!note.tags.includes('Calendar')) note.tags.push('Calendar');
+      return await note.save();
+    } else {
+      // Create new note
+      const newNote = new Note({
+        userId,
+        title: `[Calendar] ${itemTitle}`,
+        content: itemDescription,
+        tags: ['Calendar'],
+        linkedEventId: itemId
+      });
+      const savedNote = await newNote.save();
+      
+      // If it's a local item, link it back for faster lookups
+      if (item.save && item._id) {
+        item.linkedNoteId = savedNote._id;
+        await item.save();
+      }
+      return savedNote;
+    }
+  } catch (error) {
+    console.error('❌ Note Sync Error:', error.message);
+    return null;
+  }
+};
 
 const calculateTriggerTime = (eventStartTime, offsetValue, offsetUnit) => {
   const date = new Date(eventStartTime);
@@ -38,6 +81,9 @@ exports.createItem = async (req, res) => {
     const { reminders, ...itemData } = req.body;
     const item = new CalendarItem({ ...itemData, userId: req.user.id });
     const savedItem = await item.save();
+
+    // REAL-TIME SYNC: Create linked note
+    await syncToNote(savedItem, req.user.id);
 
     if (reminders && reminders.length > 0) {
       for (const r of reminders) {
@@ -92,6 +138,8 @@ exports.updateItem = async (req, res) => {
       if (user && user.googleConnected) {
         try {
           const updatedEvent = await googleCalendarService.updateEvent(req.user.id, id, req.body);
+          // Sync Google update to Note
+          await syncToNote({ ...req.body, id }, req.user.id);
           return res.json({ message: 'Google event updated', event: updatedEvent });
         } catch (err) {
           return res.status(500).json({ message: 'Failed to update Google event: ' + err.message });
@@ -102,6 +150,9 @@ exports.updateItem = async (req, res) => {
     
     const updatedItem = await CalendarItem.findByIdAndUpdate(id, updateData, { new: true });
     if (!updatedItem) return res.status(404).json({ message: 'Item not found' });
+
+    // REAL-TIME SYNC: Update linked note
+    await syncToNote(updatedItem, req.user.id);
 
     // Handle reminders sync (simple approach: delete and recreate)
     if (reminders) {
@@ -165,6 +216,8 @@ exports.deleteItem = async (req, res) => {
       if (user && user.googleConnected) {
         try {
           await googleCalendarService.deleteEvent(req.user.id, id);
+          // Sync Google deletion to Note
+          await Note.findOneAndDelete({ userId: req.user.id, linkedEventId: id });
           return res.json({ message: 'Google event deleted' });
         } catch (err) {
           return res.status(500).json({ message: 'Failed to delete Google event: ' + err.message });
@@ -175,6 +228,9 @@ exports.deleteItem = async (req, res) => {
 
     const item = await CalendarItem.findById(id);
     if (!item) return res.status(404).json({ message: 'Item not found' });
+
+    // REAL-TIME SYNC: Handle linked note deletion
+    await Note.findOneAndDelete({ userId: req.user.id, linkedEventId: id });
 
     if (scope === 'all') {
       // Sync with Google (delete entire series)

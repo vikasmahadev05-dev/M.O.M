@@ -136,7 +136,7 @@ const EventForm = ({ isOpen, onClose, onSave, onDelete, onDuplicate, initialData
         {/* Header */}
         <div className="flex items-center justify-between px-8 py-6 border-b border-gray-50">
           <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-2xl ${formData.type === 'task' ? 'bg-indigo-50 text-indigo-600' : formData.type === 'event' ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-600'}`}>
+            <div className={`p-3 rounded-2xl ${formData.type === 'task' ? 'bg-orange-50 text-orange-600' : formData.type === 'event' ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-600'}`}>
               <Calendar size={24} />
             </div>
             <div>
@@ -150,7 +150,7 @@ const EventForm = ({ isOpen, onClose, onSave, onDelete, onDuplicate, initialData
                 {formData.calendarName && (
                   <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tighter ${
                     formData.calendarName.toLowerCase().includes('holiday') ? 'bg-rose-100 text-rose-600' : 
-                    formData.calendarName.toLowerCase().includes('birthday') ? 'bg-pink-100 text-pink-600' : 'bg-indigo-100 text-indigo-600'
+                    formData.calendarName.toLowerCase().includes('birthday') ? 'bg-pink-100 text-pink-600' : 'bg-orange-100 text-orange-600'
                   }`}>
                     {formData.calendarName}
                   </span>
@@ -215,7 +215,7 @@ const EventForm = ({ isOpen, onClose, onSave, onDelete, onDuplicate, initialData
                   <div className="flex items-center gap-2">
                     <input
                       type="datetime-local"
-                      className="flex-1 px-4 py-3 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20"
+                      className="flex-1 px-4 py-3 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-orange-500/20"
                       value={formData.startTime}
                       onChange={(e) => handleStartTimeChange(e.target.value)}
                     />
@@ -223,7 +223,7 @@ const EventForm = ({ isOpen, onClose, onSave, onDelete, onDuplicate, initialData
                   <div className="flex items-center gap-2">
                     <input
                       type="datetime-local"
-                      className="flex-1 px-4 py-3 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20"
+                      className="flex-1 px-4 py-3 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-orange-500/20"
                       value={formData.endTime}
                       onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
                     />
@@ -302,7 +302,7 @@ const EventForm = ({ isOpen, onClose, onSave, onDelete, onDuplicate, initialData
                             setFormData({ ...formData, recurrenceDays: newDays });
                           }}
                           className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase transition-all ${
-                            (formData.recurrenceDays || []).includes(day) ? 'bg-indigo-600 text-white' : 'bg-white text-slate-400 border border-slate-100'
+                            (formData.recurrenceDays || []).includes(day) ? 'bg-gradient-to-r from-[#F59E0B] to-[#D97706] text-white shadow-md' : 'bg-white text-slate-400 border border-slate-100'
                           }`}
                         >
                           {day.substring(0, 3)}
@@ -354,7 +354,7 @@ const EventForm = ({ isOpen, onClose, onSave, onDelete, onDuplicate, initialData
                 </label>
                 <div className="flex flex-wrap gap-2 mb-2">
                   {formData.tags.map(tag => (
-                    <span key={tag} className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-xl text-[10px] font-black uppercase">
+                    <span key={tag} className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 text-orange-600 rounded-xl text-[10px] font-black uppercase">
                       {tag}
                       <button type="button" onClick={() => setFormData({ ...formData, tags: formData.tags.filter(t => t !== tag) })}>
                         <X size={12} />
@@ -412,7 +412,7 @@ const EventForm = ({ isOpen, onClose, onSave, onDelete, onDuplicate, initialData
             </button>
             <button
               onClick={handleSubmit}
-              className="px-8 py-3 bg-indigo-600 text-white rounded-2xl shadow-xl shadow-indigo-100 hover:scale-105 active:scale-95 transition-all font-black text-xs uppercase tracking-widest flex items-center gap-2"
+              className="px-8 py-3 bg-[#FED7AA] text-orange-900/70 rounded-2xl shadow-[0_4px_15px_rgba(253,186,116,0.15)] hover:scale-105 active:scale-95 transition-all font-black text-xs uppercase tracking-widest flex items-center gap-2 border border-orange-200/50"
             >
               Save Changes
               <ArrowRightLeft size={16} />

@@ -126,7 +126,7 @@ const NotesOverview = () => {
           
           <button 
             onClick={handleCreateNote}
-            className="group flex items-center gap-3 px-8 py-4 bg-indigo-600 text-white rounded-3xl font-black text-sm hover:bg-indigo-700 transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-indigo-100/50"
+            className="group flex items-center gap-3 px-8 py-4 bg-[#FED7AA] text-orange-900/70 rounded-3xl font-black text-sm hover:scale-[1.05] active:scale-95 transition-all shadow-[0_8px_20px_rgba(253,186,116,0.2)] border border-orange-200/50"
           >
             <Plus size={20} strokeWidth={3} />
             New Note
@@ -142,7 +142,7 @@ const NotesOverview = () => {
                 <button 
                   onClick={() => handleBreadcrumbClick(item.id)}
                   className={`text-[11px] font-black uppercase tracking-[0.2em] transition-all ${
-                    isLast ? 'text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full' : 'text-slate-400 hover:text-indigo-400'
+                    isLast ? 'text-orange-600 bg-orange-50 px-3 py-1 rounded-full' : 'text-slate-400 hover:text-orange-400'
                   }`}
                 >
                   {item.name}
@@ -224,7 +224,7 @@ const NotesOverview = () => {
       {/* Floating Action Button (Mobile Only) */}
       <button 
         onClick={handleCreateNote}
-        className="fixed bottom-24 right-6 md:hidden w-16 h-16 bg-indigo-500 text-white rounded-3xl shadow-2xl flex items-center justify-center z-[60] active:scale-90 transition-transform"
+        className="fixed bottom-24 right-6 md:hidden w-16 h-16 bg-gradient-to-br from-[#F59E0B] to-[#D97706] text-white rounded-3xl shadow-[0_10px_30px_rgba(217,119,6,0.4)] flex items-center justify-center z-[60] active:scale-90 transition-transform border border-orange-400/20"
       >
         <Plus size={28} strokeWidth={3} />
       </button>

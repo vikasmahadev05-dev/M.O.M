@@ -78,99 +78,145 @@ const NotesTopBar = ({ onToggleSidebar }) => {
   };
 
   return (
-    <div className="flex flex-col gap-3 w-full bg-white/80 backdrop-blur-xl border-b border-[var(--border)] px-4 py-3 relative z-50 shadow-sm rounded-t-3xl">
-
-      {/* TOP ROW */}
-      <div className="flex items-center justify-between gap-4">
-
-        <button onClick={onToggleSidebar} className="p-2 lg:hidden hover:bg-gray-100 rounded-xl">
-          <Menu size={20} />
-        </button>
-
-        <div className="flex items-center gap-2">
-
-          {/* FOLDER DROPDOWN */}
-          <div className="relative" ref={folderDropdownRef}>
-            <button 
-              onClick={() => { setIsFolderDropdownOpen(!isFolderDropdownOpen); setIsNoteDropdownOpen(false); }} 
-              className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-100 transition-colors"
-            >
-              <FolderOpen size={16} className="text-[var(--accent)]" />
-              <span className="font-medium text-sm">{currentFolder ? currentFolder.name : 'All Notes'}</span>
-              <ChevronDown size={14} className="text-gray-400" />
-            </button>
-
-            {isFolderDropdownOpen && (
-              <div className="absolute top-full left-0 w-72 bg-white shadow-xl rounded-xl z-[9999] mt-2 p-2">
-
-                <div onClick={() => handleSelectFolder(null)} className="p-2 hover:bg-gray-100 rounded">
-                  All Notes
+    <div className="flex flex-col gap-4 w-full bg-white/80 backdrop-blur-xl border-b border-[var(--border)] px-4 py-4 relative z-50 shadow-sm rounded-t-3xl">
+      {/* TOP ROW: Search, Folders, Notes */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <button onClick={onToggleSidebar} className="p-2.5 lg:hidden bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors">
+            <Menu size={20} />
+          </button>
+          
+          <div className="flex-1 md:flex-none flex items-center gap-2">
+            {/* FOLDER DROPDOWN */}
+            <div className="relative flex-1 md:flex-none" ref={folderDropdownRef}>
+              <button 
+                onClick={() => { setIsFolderDropdownOpen(!isFolderDropdownOpen); setIsNoteDropdownOpen(false); }} 
+                className="w-full flex items-center justify-between md:justify-start gap-2 px-4 py-2.5 bg-slate-50 md:bg-transparent rounded-xl hover:bg-slate-100 transition-all border border-transparent hover:border-slate-200"
+              >
+                <div className="flex items-center gap-2">
+                  <FolderOpen size={16} className="text-[var(--accent)]" />
+                  <span className="font-bold text-[11px] uppercase tracking-widest text-slate-700">{currentFolder ? currentFolder.name : 'All Notes'}</span>
                 </div>
+                <ChevronDown size={14} className="text-slate-400" />
+              </button>
 
-                {folders.map(folder => (
-                  <div key={folder._id} onClick={() => handleSelectFolder(folder._id)} className="p-2 hover:bg-gray-100 rounded">
-                    {folder.name}
+              {isFolderDropdownOpen && (
+                <div className="fixed inset-x-0 bottom-0 z-[200] bg-white rounded-t-[3rem] shadow-[0_-20px_50px_rgba(0,0,0,0.1)] p-8 md:absolute md:inset-auto md:top-full md:left-0 md:w-72 md:shadow-xl md:rounded-2xl md:mt-2 md:p-3 md:animate-in md:fade-in md:slide-in-from-top-2">
+                  <div className="w-12 h-1.5 bg-slate-100 rounded-full mx-auto mb-6 md:hidden" />
+                  <p className="text-[10px] uppercase font-black tracking-[0.2em] text-slate-400 mb-4 px-2">Select Folder</p>
+                  <div className="max-h-64 overflow-y-auto hide-scrollbar">
+                    <button onClick={() => handleSelectFolder(null)} className="w-full text-left px-4 py-3.5 hover:bg-slate-50 rounded-xl text-[11px] font-bold uppercase tracking-widest text-slate-600 transition-all mb-1">
+                      All Notes
+                    </button>
+                    {folders.map(folder => (
+                      <button key={folder._id} onClick={() => handleSelectFolder(folder._id)} className="w-full text-left px-4 py-3.5 hover:bg-slate-50 rounded-xl text-[11px] font-bold uppercase tracking-widest text-slate-600 transition-all mb-1">
+                        {folder.name}
+                      </button>
+                    ))}
                   </div>
-                ))}
+                  <form onSubmit={handleCreateFolder} className="flex gap-2 mt-4 pt-4 border-t border-slate-50">
+                    <input 
+                      value={newFolderName} 
+                      onChange={(e) => setNewFolderName(e.target.value)} 
+                      placeholder="New folder..."
+                      className="flex-1 bg-slate-50 px-4 py-2.5 rounded-xl text-xs outline-none focus:ring-2 focus:ring-indigo-100" 
+                    />
+                    <button className="p-2.5 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-100">
+                      <Plus size={18} />
+                    </button>
+                  </form>
+                </div>
+              )}
+            </div>
 
-                <form onSubmit={handleCreateFolder} className="flex gap-2 mt-2">
-                  <input value={newFolderName} onChange={(e) => setNewFolderName(e.target.value)} className="flex-1 border p-1 rounded" />
-                  <button>Add</button>
-                </form>
+            {/* NOTE DROPDOWN */}
+            <div className="relative flex-1 md:flex-none" ref={noteDropdownRef}>
+              <button 
+                onClick={() => { setIsNoteDropdownOpen(!isNoteDropdownOpen); setIsFolderDropdownOpen(false); }} 
+                className="w-full flex items-center justify-between md:justify-start gap-2 px-4 py-2.5 bg-slate-50 md:bg-transparent rounded-xl hover:bg-slate-100 transition-all border border-transparent hover:border-slate-200"
+              >
+                <div className="flex items-center gap-2">
+                  <FileText size={16} className="text-indigo-400" />
+                  <span className="font-bold text-[11px] uppercase tracking-widest text-slate-700 truncate max-w-[80px] md:max-w-none">{currentNote ? currentNote.title : "Select Note"}</span>
+                </div>
+                <ChevronDown size={14} className="text-slate-400" />
+              </button>
 
-              </div>
-            )}
-          </div>
-
-          {/* NOTE DROPDOWN */}
-          <div className="relative" ref={noteDropdownRef}>
-            <button 
-              onClick={() => { setIsNoteDropdownOpen(!isNoteDropdownOpen); setIsFolderDropdownOpen(false); }} 
-              className="px-4 py-2 border border-[var(--border)] rounded-xl bg-white hover:bg-gray-50 flex items-center gap-2 transition-all shadow-sm"
-            >
-              <FileText size={16} className="text-[var(--accent)]" />
-              <span className="font-semibold text-sm">{currentNote ? currentNote.title : "Select Note"}</span>
-              <ChevronDown size={14} className="text-gray-400" />
-            </button>
-
-            {isNoteDropdownOpen && (
-              <div className="absolute top-full left-0 w-80 bg-white shadow-xl rounded-xl z-[9999] mt-2 max-h-60 overflow-y-auto">
-                {notes.map(note => (
-                  <div key={note._id} onClick={() => handleSelectNote(note._id)} className="p-2 hover:bg-gray-100">
-                    {note.title}
+              {isNoteDropdownOpen && (
+                <div className="fixed inset-x-0 bottom-0 z-[200] bg-white rounded-t-[3rem] shadow-[0_-20px_50px_rgba(0,0,0,0.1)] p-8 md:absolute md:inset-auto md:top-full md:left-0 md:w-80 md:shadow-xl md:rounded-2xl md:mt-2 md:p-3 md:animate-in md:fade-in md:slide-in-from-top-2">
+                  <div className="w-12 h-1.5 bg-slate-100 rounded-full mx-auto mb-6 md:hidden" />
+                  <p className="text-[10px] uppercase font-black tracking-[0.2em] text-slate-400 mb-4 px-2">Jump to Note</p>
+                  <div className="max-h-64 overflow-y-auto hide-scrollbar">
+                    {notes.map(note => (
+                      <button key={note._id} onClick={() => handleSelectNote(note._id)} className="w-full text-left px-4 py-3.5 hover:bg-slate-50 rounded-xl text-[11px] font-bold uppercase tracking-widest text-slate-600 transition-all mb-1">
+                        {note.title || 'Untitled Note'}
+                      </button>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
+                </div>
+              )}
+            </div>
           </div>
-
         </div>
 
-        {/* SEARCH */}
-        <input
-          type="text"
-          placeholder="Search..."
-          value={searchQuery}
-          onChange={handleSearchChange}
-          className="border rounded-full px-4 py-2"
-        />
-
+        {/* SEARCH BAR */}
+        <div className="relative w-full md:w-80">
+          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search your mind..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            className="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500/20 transition-all outline-none font-medium"
+          />
+        </div>
       </div>
 
-      {/* TAGS */}
-      <div className="flex gap-2 overflow-x-auto">
-        {tags.map(tag => (
-          <button key={tag._id} onClick={() => handleTagClick(tag.name)} className="px-3 py-1 rounded-full border">
-            {tag.name}
+      {/* BOTTOM ROW: TAGS (Horizontal Scroll) */}
+      <div className="flex items-center gap-2 pt-1">
+        <div className="horizontal-scroll flex items-center gap-2 flex-1 pb-1">
+          <button 
+            onClick={() => handleTagClick('')}
+            className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap
+              ${!activeTag ? 'bg-slate-900 text-white shadow-lg shadow-slate-200' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
+          >
+            All
           </button>
-        ))}
+          {tags.map(tag => (
+            <button 
+              key={tag._id} 
+              onClick={() => handleTagClick(tag.name)}
+              className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap
+                ${activeTag === tag.name ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
+            >
+              #{tag.name}
+            </button>
+          ))}
+        </div>
 
-        <form onSubmit={handleCreateTag} className="flex gap-1">
-          <input value={newTagName} onChange={(e) => setNewTagName(e.target.value)} className="border px-2" />
-          <button>Add</button>
-        </form>
+        <div className="h-6 w-[1px] bg-slate-100 mx-1 shrink-0" />
+
+        <div ref={addTagRef} className="shrink-0">
+          {!isAddTagMode ? (
+            <button 
+              onClick={() => setIsAddTagMode(true)}
+              className="p-1.5 bg-slate-50 text-slate-400 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
+            >
+              <Plus size={16} strokeWidth={3} />
+            </button>
+          ) : (
+            <form onSubmit={handleCreateTag} className="flex gap-1 animate-in slide-in-from-right-4 duration-300">
+              <input 
+                autoFocus
+                value={newTagName} 
+                onChange={(e) => setNewTagName(e.target.value)} 
+                className="w-24 bg-indigo-50 px-3 py-1.5 rounded-lg text-[10px] font-bold outline-none ring-1 ring-indigo-200"
+                placeholder="New tag..."
+              />
+            </form>
+          )}
+        </div>
       </div>
-
     </div>
   );
 };

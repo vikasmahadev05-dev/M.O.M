@@ -67,8 +67,8 @@ const EventCard = ({ item, onClick, style: passedStyle, compact = false }) => {
       }}
       className={`
         group relative flex flex-col overflow-hidden border-l-[4px] rounded-2xl p-2.5 cursor-pointer
-        hover:shadow-xl hover:shadow-indigo-500/5 hover:z-20 transition-all duration-300 backdrop-blur-sm
-        ${priorityColors[item.priority] || 'border-l-indigo-500'}
+        hover:shadow-xl hover:shadow-orange-500/5 hover:z-20 transition-all duration-300 backdrop-blur-sm
+        ${priorityColors[item.priority] || 'border-l-orange-500'}
         ${compact ? 'text-[9px] leading-tight' : 'text-[11px]'}
         ${item.isInstance ? 'border-dashed' : ''}
       `}
@@ -97,7 +97,7 @@ const EventCard = ({ item, onClick, style: passedStyle, compact = false }) => {
             <span className="tracking-widest uppercase text-[9px]">{formatEventTime(item.startTime)} - {formatEventTime(item.endTime)}</span>
           </div>
           {item.location && (
-            <div className="flex items-center gap-1.5 text-indigo-500/70">
+            <div className="flex items-center gap-1.5 text-orange-500/70">
               <MapPin size={10} strokeWidth={3} />
               <span className="truncate tracking-tight">{item.location}</span>
             </div>

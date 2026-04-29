@@ -100,6 +100,10 @@ const calendarItemSchema = new mongoose.Schema({
     type: String,
     enum: ['synced', 'pending', 'failed'],
     default: 'pending'
+  },
+  linkedNoteId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Note'
   }
 }, {
   timestamps: true

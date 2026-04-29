@@ -108,6 +108,7 @@ const CalendarPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [isTimelineOpen, setIsTimelineOpen] = useState(false);
 
   useEffect(() => {
     dispatch(checkGoogleStatus());
@@ -178,15 +179,22 @@ const CalendarPage = () => {
 
   const handleSave = (formData) => {
     if (formData._id && !formData.isInstance) {
-      dispatch(updateCalendarItem({ id: formData._id, ...formData }));
+      dispatch(updateCalendarItem({ id: formData._id, ...formData }))
+        .then(() => {
+          dispatch(fetchCalendarItems(filters));
+          if (googleConnected) dispatch(fetchGoogleEvents());
+        });
     } else {
       // If it was a recurring instance, we could handle "this vs all" here
       // For now, always create new if no ID or just update original
-      if (formData._id) {
-         dispatch(updateCalendarItem({ id: formData._id.split('_')[0], ...formData }));
-      } else {
-         dispatch(createCalendarItem(formData));
-      }
+      const action = formData._id ? 
+        updateCalendarItem({ id: formData._id.split('_')[0], ...formData }) : 
+        createCalendarItem(formData);
+        
+      dispatch(action).then(() => {
+        dispatch(fetchCalendarItems(filters));
+        if (googleConnected) dispatch(fetchGoogleEvents());
+      });
     }
     setIsModalOpen(false);
     setSelectedItem(null);
@@ -234,7 +242,10 @@ const CalendarPage = () => {
         id: itemToDelete._id, 
         scope,
         date // Pass which instance to delete
-      }));
+      })).then(() => {
+        dispatch(fetchCalendarItems(filters));
+        if (googleConnected) dispatch(fetchGoogleEvents());
+      });
       setIsDeleteModalOpen(false);
       setItemToDelete(null);
       setIsModalOpen(false);
@@ -291,29 +302,52 @@ const CalendarPage = () => {
       <FilterBar />
 
       <div className="flex flex-col lg:flex-row gap-6 mb-10 h-full">
-        <div className="flex-1 min-w-0 space-y-6 animate-in fade-in slide-in-from-left-4 duration-700">
+        <div className="flex-1 min-w-0 space-y-4 md:space-y-6 animate-in fade-in slide-in-from-left-4 duration-700">
           {status === 'loading' ? (
-            <div className="h-[500px] lg:h-[700px] bg-white/50 backdrop-blur-xl rounded-[2.5rem] border border-white/40 flex items-center justify-center shadow-xl shadow-slate-200/50">
+            <div className="h-[400px] md:h-[650px] bg-white/50 backdrop-blur-xl rounded-[2.5rem] border border-white/40 flex items-center justify-center shadow-xl shadow-slate-200/50">
               <div className="flex flex-col items-center gap-6">
                 <div className="relative">
-                  <div className="w-16 h-16 border-4 border-indigo-500/20 rounded-full" />
-                  <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin absolute top-0 left-0" />
+                  <div className="w-12 h-12 md:w-16 md:h-16 border-4 border-indigo-500/20 rounded-full" />
+                  <div className="w-12 h-12 md:w-16 md:h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin absolute top-0 left-0" />
                 </div>
-                <div className="space-y-1 text-center">
-                  <p className="text-xs font-black text-slate-800 uppercase tracking-widest">Architecting Schedule</p>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Optimizing your flow...</p>
+                <div className="space-y-1 text-center px-4">
+                  <p className="text-[10px] md:text-xs font-black text-slate-800 uppercase tracking-widest">Architecting Schedule</p>
+                  <p className="text-[8px] md:text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Optimizing your flow...</p>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="bg-white/50 backdrop-blur-xl rounded-[2.5rem] border border-white/40 shadow-xl shadow-slate-200/50 overflow-hidden">
+            <div className={`
+              bg-white/50 backdrop-blur-xl rounded-[2.5rem] border border-white/40 shadow-xl shadow-slate-200/50 
+              transition-all duration-500 overflow-hidden
+              ${view === 'month' ? 'min-h-[400px] md:min-h-[650px]' : 'min-h-0 md:min-h-[500px]'}
+            `}>
               {renderView()}
             </div>
           )}
         </div>
 
-        <div className="w-full lg:w-[380px] shrink-0 animate-in fade-in slide-in-from-right-4 duration-700">
-          <SchedulePanel />
+        {/* Schedule Panel - Responsive Drawer on Mobile, Sidebar on Desktop */}
+        <div className={`
+          fixed inset-0 z-[200] lg:static lg:w-[300px] lg:shrink-0 lg:z-auto transition-all duration-500
+          ${view === 'agenda' ? 'hidden' : (isTimelineOpen ? 'visible' : 'invisible lg:visible')}
+        `}>
+          {/* Backdrop for mobile */}
+          <div 
+            className={`absolute inset-0 bg-slate-900/40 backdrop-blur-sm lg:hidden transition-opacity duration-500 ${isTimelineOpen ? 'opacity-100' : 'opacity-0'}`}
+            onClick={() => setIsTimelineOpen(false)}
+          />
+          
+          <div className={`
+            absolute inset-x-0 bottom-0 bg-white/90 backdrop-blur-xl rounded-t-[3rem] p-4 bottom-sheet-up lg:static lg:bg-transparent lg:p-0 lg:rounded-none lg:animate-none
+            ${isTimelineOpen ? 'translate-y-0' : 'translate-y-full lg:translate-y-0'}
+            transition-transform duration-500 shadow-2xl lg:shadow-none
+          `}>
+            <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6 lg:hidden" />
+            <div className="max-h-[80vh] overflow-y-auto lg:max-h-none lg:overflow-visible">
+              <SchedulePanel />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -340,13 +374,16 @@ const CalendarPage = () => {
         onUndo={handleUndo}
       />
 
-      {/* Floating Action Button */}
-      <button 
-        onClick={() => { setSelectedItem(null); setIsModalOpen(true); }}
-        className="fixed bottom-24 right-10 w-16 h-16 bg-slate-900 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 group"
-      >
-        <Plus size={32} className="group-hover:rotate-90 transition-all duration-500" />
-      </button>
+      {/* Floating Action Button Group */}
+      <div className="fixed bottom-24 right-6 flex flex-col gap-4 z-[150] lg:hidden">
+        {/* Timeline Toggle (Mobile Only) */}
+        <button 
+          onClick={() => setIsTimelineOpen(true)}
+          className="w-14 h-14 bg-indigo-600 text-white rounded-2xl shadow-2xl flex items-center justify-center active:scale-95 transition-all animate-in slide-in-from-bottom duration-700"
+        >
+          <Clock size={24} strokeWidth={3} />
+        </button>
+      </div>
     </div>
   );
 };

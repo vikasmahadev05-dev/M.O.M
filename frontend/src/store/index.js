@@ -5,7 +5,7 @@ import tagsReducer from './tagsSlice';
 import tasksReducer from './tasksSlice';
 import authReducer from './authSlice';
 import calendarReducer from './calendarSlice';
-
+import taskCategoriesReducer from './taskCategoriesSlice';
 
 export const store = configureStore({
   reducer: {
@@ -15,6 +15,6 @@ export const store = configureStore({
     tasks: tasksReducer,
     auth: authReducer,
     calendar: calendarReducer,
+    taskCategories: taskCategoriesReducer,
   },
-
 });

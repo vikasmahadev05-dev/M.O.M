@@ -17,7 +17,7 @@ import {
   FolderOpen,
   X
 } from 'lucide-react';
-import { deleteNote, duplicateNote, updateNote } from '../../store/notesSlice';
+import { deleteNote, duplicateNote, updateNote, linkNotes, unlinkNotes } from '../../store/notesSlice';
 import { formatDistanceToNow } from 'date-fns';
 import { extractPlainText } from '../../utils/noteUtils';
 
@@ -43,6 +43,7 @@ const NoteCard = ({ note }) => {
     priority,
     updatedAt,
     folderId,
+    linkedEventId,
     links = []
   } = note;
 
@@ -122,6 +123,17 @@ const NoteCard = ({ note }) => {
     setIsMoving(false);
   };
 
+  const handleConnect = (targetId) => {
+    dispatch(linkNotes({ noteId: _id, targetId, reason: linkReason }));
+    setIsLinking(false);
+    setSearchQuery('');
+    setLinkReason('');
+  };
+
+  const handleUnlink = (targetId) => {
+    dispatch(unlinkNotes({ noteId: _id, targetId }));
+  };
+
   return (
     <div 
       onClick={() => navigate(`/notes/${_id}`)}
@@ -166,6 +178,12 @@ const NoteCard = ({ note }) => {
             <Clock size={12} strokeWidth={2.5} />
             {formatDistanceToNow(new Date(updatedAt))} ago
           </div>
+          {linkedEventId && (
+            <div className="flex items-center gap-2 text-[10px] text-indigo-500 font-black uppercase tracking-widest mt-1">
+              <Calendar size={12} strokeWidth={2.5} />
+              Linked to Calendar
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-2.5 opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0 z-20">
@@ -183,7 +201,7 @@ const NoteCard = ({ note }) => {
               </button>
               
               {isMoving && (
-                <div className="absolute bottom-full right-0 mb-4 w-60 bg-white rounded-[2rem] shadow-2xl border border-slate-100 p-3 z-[100] animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="absolute bottom-full right-0 lg:right-[-40px] mb-4 w-60 bg-white rounded-[2rem] shadow-2xl border border-slate-100 p-3 z-[100] animate-in fade-in slide-in-from-bottom-2 duration-300">
                   <p className="text-[10px] uppercase font-black tracking-[0.25em] text-indigo-400 px-4 py-3 border-b border-indigo-50 mb-2">Move to Folder</p>
                   <div className="max-h-56 overflow-y-auto hide-scrollbar scroll-smooth pr-1">
                     {allFolders.map(f => (
@@ -202,6 +220,101 @@ const NoteCard = ({ note }) => {
             </div>
           )}
 
+          <div className="relative">
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsLinking(!isLinking);
+                setIsMoving(false);
+                setShowDeleteOptions(false);
+              }} 
+              className={`p-3 rounded-2xl transition-all shadow-md ${isLinking ? 'bg-indigo-500 text-white' : 'bg-white text-slate-400 hover:text-indigo-600 hover:shadow-lg'}`}
+              title="Connect Notes"
+            >
+              <LinkIcon size={18} strokeWidth={2.5} />
+            </button>
+
+            {/* Note Linking Dialog - Responsive (Bottom Sheet on Mobile, Floating on Desktop) */}
+            {isLinking && (
+              <>
+                {/* Mobile Backdrop */}
+                <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-[2px] z-[190] lg:hidden" onClick={() => setIsLinking(false)} />
+                <div className="fixed inset-x-0 bottom-0 z-[200] bg-white rounded-t-[3rem] shadow-[0_-20px_50px_rgba(0,0,0,0.1)] p-8 animate-in slide-in-from-bottom duration-500 lg:absolute lg:inset-auto lg:bottom-full lg:right-[-80px] lg:mb-4 lg:w-72 lg:rounded-[2rem] lg:shadow-2xl lg:border lg:border-slate-100 lg:p-4 lg:z-[100] lg:animate-in lg:fade-in lg:slide-in-from-bottom-2">
+                  <div className="w-12 h-1.5 bg-slate-100 rounded-full mx-auto mb-6 lg:hidden" />
+                  <p className="text-[10px] uppercase font-black tracking-[0.25em] text-indigo-400 px-2 py-2 border-b border-indigo-50 mb-4 text-center lg:mb-3">Manage Connections</p>
+                  
+                  {/* Existing Links Section */}
+                  {links.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-[9px] uppercase font-bold text-slate-400 tracking-widest px-2 mb-2">Current Links</p>
+                      <div className="space-y-1.5 max-h-32 overflow-y-auto hide-scrollbar pr-1">
+                        {links.map((link) => {
+                          const linkedNote = allNotes.find(n => n._id === (link.targetId?._id || link.targetId || link));
+                          if (!linkedNote) return null;
+                          return (
+                            <div key={linkedNote._id} className="flex items-center justify-between gap-2 px-3 py-2 bg-indigo-50/50 rounded-xl group/link">
+                              <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600 truncate">{linkedNote.title}</span>
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleUnlink(linkedNote._id);
+                                }}
+                                className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-white rounded-lg transition-all"
+                                title="Remove Link"
+                              >
+                                <X size={12} strokeWidth={3} />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div className="border-t border-indigo-50 my-3" />
+                    </div>
+                  )}
+
+                  <p className="text-[9px] uppercase font-bold text-slate-400 tracking-widest px-2 mb-2">Connect New Note</p>
+                  <input 
+                    type="text" 
+                    placeholder="Search notes..." 
+                    className="w-full px-5 py-3 lg:px-4 lg:py-2 rounded-2xl lg:rounded-xl bg-slate-50 text-xs mb-2 outline-none focus:ring-2 focus:ring-indigo-100 font-semibold"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  
+                  <input 
+                    type="text" 
+                    placeholder="Reason (optional)" 
+                    className="w-full px-5 py-3 lg:px-4 lg:py-2 rounded-2xl lg:rounded-xl bg-slate-50 text-xs mb-4 lg:mb-3 outline-none focus:ring-2 focus:ring-indigo-100 font-semibold"
+                    value={linkReason}
+                    onChange={(e) => setLinkReason(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+
+                  <div className="max-h-48 lg:max-h-40 overflow-y-auto hide-scrollbar scroll-smooth pr-1">
+                    {allNotes
+                      .filter(n => n._id !== _id && !links.some(l => (l.targetId?._id || l.targetId || l) === n._id) && n.title.toLowerCase().includes(searchQuery.toLowerCase()))
+                      .map(n => (
+                        <button 
+                          key={n._id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleConnect(n._id);
+                          }}
+                          className="w-full text-left px-5 py-4 lg:px-4 lg:py-3 hover:bg-indigo-50 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 transition-all mb-1 border border-transparent hover:border-indigo-100"
+                        >
+                          {n.title || 'Untitled Note'}
+                        </button>
+                      ))}
+                    {allNotes.filter(n => n._id !== _id && !links.some(l => (l.targetId?._id || l.targetId || l) === n._id) && n.title.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && (
+                      <p className="text-center py-6 lg:py-4 text-[10px] font-bold text-slate-300 uppercase tracking-widest">No matching notes</p>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
           <button onClick={handleDuplicate} className="p-3 bg-white rounded-2xl text-slate-400 hover:text-amber-600 hover:shadow-lg transition-all shadow-md">
             <Copy size={18} strokeWidth={2.5} />
           </button>
@@ -211,6 +324,8 @@ const NoteCard = ({ note }) => {
               onClick={(e) => {
                 e.stopPropagation();
                 setShowDeleteOptions(!showDeleteOptions);
+                setIsLinking(false);
+                setIsMoving(false);
               }}
               className={`p-3 rounded-2xl transition-all shadow-md ${showDeleteOptions ? 'bg-red-500 text-white' : 'bg-white text-slate-400 hover:text-red-500 hover:shadow-lg'}`}
             >

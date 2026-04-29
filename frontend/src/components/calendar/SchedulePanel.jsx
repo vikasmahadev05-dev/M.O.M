@@ -1,10 +1,13 @@
 import React from 'react';
 import { MoreHorizontal, Clock, Calendar as CalendarIcon, CheckCircle2 } from 'lucide-react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { format, isAfter, startOfDay } from 'date-fns';
+import { setView } from '../../store/calendarSlice';
+import { generateRecurrenceInstances } from '../../utils/calendarUtils';
+import { addDays } from 'date-fns';
 
 const ScheduleItem = ({ item }) => (
-  <div className="group relative p-5 bg-white border border-slate-100/80 rounded-[1.5rem] hover:border-indigo-200 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/10 cursor-pointer overflow-hidden">
+  <div className="group relative p-5 bg-white border border-slate-100/80 rounded-[1.5rem] hover:border-orange-200 transition-all duration-300 hover:shadow-2xl hover:shadow-orange-500/10 cursor-pointer overflow-hidden">
     <div 
       className="absolute top-0 left-0 w-1.5 h-full transition-all duration-300 group-hover:w-2" 
       style={{ backgroundColor: item.colorTag || '#9333ea' }}
@@ -13,7 +16,7 @@ const ScheduleItem = ({ item }) => (
     <div className="flex flex-col gap-4">
       <div className="flex items-start justify-between">
         <div className="space-y-1">
-          <h4 className="font-black text-sm text-slate-800 group-hover:text-indigo-600 transition-colors line-clamp-1 tracking-tight">
+          <h4 className="font-black text-sm text-slate-800 group-hover:text-orange-600 transition-colors line-clamp-1 tracking-tight">
             {item.title}
           </h4>
           <div className="flex items-center gap-2">
@@ -28,7 +31,7 @@ const ScheduleItem = ({ item }) => (
         </div>
         
         <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button className="p-2 hover:bg-slate-50 rounded-xl text-slate-400 hover:text-indigo-600 transition-all">
+          <button className="p-2 hover:bg-slate-50 rounded-xl text-slate-400 hover:text-orange-600 transition-all">
             <MoreHorizontal size={16} strokeWidth={3} />
           </button>
         </div>
@@ -66,17 +69,46 @@ const ScheduleItem = ({ item }) => (
 );
 
 const SchedulePanel = () => {
-  const { items } = useSelector((state) => state.calendar);
+  const dispatch = useDispatch();
+  const { items, googleEvents, googleConnected, googleSyncEnabled } = useSelector((state) => state.calendar);
   
-  // Get upcoming 5 items
-  const upcomingItems = [...items]
-    .filter(item => {
-      const isUpcoming = isAfter(new Date(item.startTime), startOfDay(new Date()));
-      // Filter out Google events from the timeline panel
-      return isUpcoming && item.status !== 'completed' && item.source !== 'google';
-    })
-    .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
-    .slice(0, 5);
+  // Get upcoming items (next 24 hours)
+  const upcomingItems = React.useMemo(() => {
+    const now = new Date();
+    const next24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    
+    // 1. Expand local recurring items for the next day
+    const localInstances = generateRecurrenceInstances(items, now, next24Hours);
+    
+    // 2. Deduplicate Google events (don't show if we already have it locally)
+    const localGoogleEventIds = new Set(
+      localInstances
+        .filter(item => item.googleEventId)
+        .map(item => item.googleEventId)
+    );
+
+    const uniqueGoogleEvents = googleEvents.filter(
+      ge => !localGoogleEventIds.has(ge._id)
+    );
+
+    // 3. Merge and Filter for strict next 24 hours
+    const allUpcoming = [...localInstances, ...uniqueGoogleEvents]
+      .filter(item => {
+        const startTime = new Date(item.startTime);
+        const endTime = new Date(item.endTime || item.startTime);
+        const isNotHoliday = !item.calendarName?.toLowerCase().includes('holiday');
+        
+        // Show if it starts within 24h OR is currently happening (ends after now)
+        const isRelevantTime = (isAfter(startTime, now) && startTime <= next24Hours) || 
+                               (isAfter(endTime, now) && startTime <= now);
+                               
+        return isRelevantTime && item.status !== 'completed' && isNotHoliday;
+      })
+      .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
+      .slice(0, 5);
+
+    return allUpcoming;
+  }, [items, googleEvents]);
 
   return (
     <div className="bg-white/50 backdrop-blur-xl border border-white/40 rounded-[2.5rem] p-8 h-fit space-y-8 animate-in fade-in slide-in-from-right-6 duration-700 shadow-xl shadow-slate-200/50">
@@ -103,10 +135,13 @@ const SchedulePanel = () => {
         </div>
       )}
 
-      <button className="group w-full py-5 bg-slate-50 hover:bg-slate-900 hover:text-white rounded-[1.5rem] transition-all duration-500 flex items-center justify-center gap-3 overflow-hidden relative">
+      <button 
+        onClick={() => dispatch(setView('agenda'))}
+        className="group w-full py-5 bg-slate-50 hover:bg-slate-900 hover:text-white rounded-[1.5rem] transition-all duration-500 flex items-center justify-center gap-3 overflow-hidden relative"
+      >
         <span className="text-[10px] font-black uppercase tracking-[0.2em] relative z-10">Full Agenda</span>
         <Clock size={16} className="relative z-10 group-hover:rotate-12 transition-transform" />
-        <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-violet-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-amber-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
       </button>
     </div>
   );

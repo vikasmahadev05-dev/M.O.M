@@ -55,6 +55,58 @@ export const deleteTask = createAsyncThunk('tasks/deleteTask', async (id, thunkA
   }
 });
 
+export const updateTask = createAsyncThunk('tasks/updateTask', async ({ id, taskData }, thunkAPI) => {
+  const token = thunkAPI.getState().auth.user?.token;
+  if (!token) return thunkAPI.rejectWithValue('No token found');
+  const config = { headers: { Authorization: `Bearer ${token}` } };
+  
+  try {
+    const response = await axios.put(`${API_URL}/${id}`, taskData, config);
+    return response.data;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+  }
+});
+
+export const batchUpdateTasks = createAsyncThunk('tasks/batchUpdate', async ({ ids, updates }, thunkAPI) => {
+  const token = thunkAPI.getState().auth.user?.token;
+  if (!token) return thunkAPI.rejectWithValue('No token found');
+  const config = { headers: { Authorization: `Bearer ${token}` } };
+  
+  try {
+    const response = await axios.post(`${API_URL}/batch/update`, { ids, updates }, config);
+    return response.data;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+  }
+});
+
+export const batchDeleteTasks = createAsyncThunk('tasks/batchDelete', async (ids, thunkAPI) => {
+  const token = thunkAPI.getState().auth.user?.token;
+  if (!token) return thunkAPI.rejectWithValue('No token found');
+  const config = { headers: { Authorization: `Bearer ${token}` } };
+  
+  try {
+    await axios.post(`${API_URL}/batch/delete`, { ids }, config);
+    return ids;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+  }
+});
+
+export const reorderTasks = createAsyncThunk('tasks/reorder', async (orders, thunkAPI) => {
+  const token = thunkAPI.getState().auth.user?.token;
+  if (!token) return thunkAPI.rejectWithValue('No token found');
+  const config = { headers: { Authorization: `Bearer ${token}` } };
+  
+  try {
+    await axios.post(`${API_URL}/reorder`, { orders }, config);
+    return orders;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+  }
+});
+
 
 const tasksSlice = createSlice({
   name: 'tasks',
@@ -63,7 +115,11 @@ const tasksSlice = createSlice({
     loading: false,
     error: null,
   },
-  reducers: {},
+  reducers: {
+    updateLocalOrder: (state, action) => {
+      state.list = action.payload;
+    }
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchTasks.pending, (state) => {
@@ -86,10 +142,27 @@ const tasksSlice = createSlice({
           state.list[index] = action.payload;
         }
       })
+      .addCase(updateTask.fulfilled, (state, action) => {
+        const index = state.list.findIndex(t => t._id === action.payload._id);
+        if (index !== -1) {
+          state.list[index] = action.payload;
+        }
+      })
+      .addCase(batchUpdateTasks.fulfilled, (state, action) => {
+        action.payload.forEach(updatedTask => {
+          const index = state.list.findIndex(t => t._id === updatedTask._id);
+          if (index !== -1) state.list[index] = updatedTask;
+        });
+      })
+      .addCase(batchDeleteTasks.fulfilled, (state, action) => {
+        state.list = state.list.filter(t => !action.payload.includes(t._id));
+      })
       .addCase(deleteTask.fulfilled, (state, action) => {
         state.list = state.list.filter(t => t._id !== action.payload);
       });
   },
 });
+
+export const { updateLocalOrder } = tasksSlice.actions;
 
 export default tasksSlice.reducer;

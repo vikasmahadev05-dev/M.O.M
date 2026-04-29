@@ -1,22 +1,52 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchNotes, addNote, setSearchQuery, setActiveTag } from '../store/notesSlice';
+import { fetchNotes, addNote, setSearchQuery } from '../store/notesSlice';
+import { addFolder, setCurrentFolder } from '../store/foldersSlice';
 import NoteCard from '../components/notes/NoteCard';
+import FolderDropdown from '../components/notes/FolderDropdown';
 import { 
   Search, 
   Plus, 
-  SlidersHorizontal, 
   LayoutGrid, 
+  Sparkles,
   Filter,
-  Sparkles
+  FolderPlus,
+  ChevronRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const NotesOverview = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { items: notes, status: notesStatus, searchQuery, activeTag } = useSelector(state => state.notes);
+  const { items: notes, status: notesStatus, searchQuery } = useSelector(state => state.notes);
+  const { items: allFolders, currentFolderId } = useSelector(state => state.folders);
   const [filter, setFilter] = useState('All');
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
+
+  // Breadcrumb Logic
+  const getBreadcrumb = () => {
+    const path = [];
+    let currentId = currentFolderId;
+    while (currentId) {
+      const folder = allFolders.find(f => f._id === currentId);
+      if (folder) {
+        path.unshift({ name: folder.name, id: folder._id });
+        currentId = folder.parentId;
+      } else {
+        break;
+      }
+    }
+    path.unshift({ name: 'All Notes', id: null });
+    return path;
+  };
+
+  const breadcrumb = getBreadcrumb();
+
+  const handleBreadcrumbClick = (folderId) => {
+    dispatch(setCurrentFolder(folderId));
+    dispatch(fetchNotes({ folderId }));
+  };
 
   const { user } = useSelector(state => state.auth);
 
@@ -27,11 +57,22 @@ const NotesOverview = () => {
   }, [dispatch, user]);
 
 
+  const handleCreateFolder = async (e) => {
+    e.preventDefault();
+    if (newFolderName.trim()) {
+      await dispatch(addFolder({ name: newFolderName.trim() }));
+      setNewFolderName('');
+      setIsCreatingFolder(false);
+    }
+  };
+
+
   const handleCreateNote = async () => {
     const result = await dispatch(addNote({
       title: 'New Note',
       content: '',
-      color: 'bg-white'
+      color: 'bg-white',
+      folderId: currentFolderId
     })).unwrap();
     navigate(`/notes/${result._id}`);
   };
@@ -39,19 +80,34 @@ const NotesOverview = () => {
   const filteredNotes = notes.filter(note => {
     const matchesSearch = note.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                          note.content.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTag = filter === 'All' || note.tags.includes(filter);
-    return matchesSearch && matchesTag;
+    const matchesTag = filter === 'All' || 
+                       note.tags.some(t => t.toLowerCase() === filter.toLowerCase());
+    const matchesFolder = !currentFolderId || note.folderId === currentFolderId;
+    
+    return matchesSearch && matchesTag && matchesFolder;
   });
 
-  // Get unique tags from all notes
+  // Get unique tags from all notes - Case-insensitive and trimmed
   const dynamicTags = React.useMemo(() => {
-    const tags = new Set(['All']);
+    const tagMap = new Map();
+    tagMap.set('all', 'All'); // Base case
+    
     notes.forEach(note => {
       if (note.tags && Array.isArray(note.tags)) {
-        note.tags.forEach(tag => tags.add(tag));
+        note.tags.forEach(tag => {
+          if (tag && typeof tag === 'string') {
+            const cleanTag = tag.trim();
+            const lowerTag = cleanTag.toLowerCase();
+            if (!tagMap.has(lowerTag)) {
+              // Capitalize first letter for aesthetic display
+              const displayTag = cleanTag.charAt(0).toUpperCase() + cleanTag.slice(1).toLowerCase();
+              tagMap.set(lowerTag, displayTag);
+            }
+          }
+        });
       }
     });
-    return Array.from(tags);
+    return Array.from(tagMap.values());
   }, [notes]);
 
 
@@ -70,11 +126,33 @@ const NotesOverview = () => {
           
           <button 
             onClick={handleCreateNote}
-            className="flex items-center justify-center gap-3 text-white font-black hover:scale-105 transition-all active:scale-95 primary-btn-size new-note-btn"
+            className="group flex items-center gap-3 px-8 py-4 bg-indigo-600 text-white rounded-3xl font-black text-sm hover:bg-indigo-700 transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-indigo-100/50"
           >
-            <Plus size={20} strokeWidth={4} />
-            <span>New Note</span>
+            <Plus size={20} strokeWidth={3} />
+            New Note
           </button>
+        </div>
+
+        {/* Global Breadcrumb Navigation */}
+        <div className="flex items-center gap-2 mb-12 animate-in fade-in slide-in-from-left-4 duration-700 px-2 overflow-x-auto hide-scrollbar whitespace-nowrap">
+          {breadcrumb.map((item, index) => {
+            const isLast = index === breadcrumb.length - 1;
+            return (
+              <React.Fragment key={item.id || 'root'}>
+                <button 
+                  onClick={() => handleBreadcrumbClick(item.id)}
+                  className={`text-[11px] font-black uppercase tracking-[0.2em] transition-all ${
+                    isLast ? 'text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full' : 'text-slate-400 hover:text-indigo-400'
+                  }`}
+                >
+                  {item.name}
+                </button>
+                {!isLast && (
+                  <ChevronRight size={12} className="text-slate-300" strokeWidth={3} />
+                )}
+              </React.Fragment>
+            );
+          })}
         </div>
 
         {/* Search and Filters Row */}
@@ -90,7 +168,12 @@ const NotesOverview = () => {
             />
           </div>
 
-          <div className="flex flex-[3] items-center gap-3 w-full lg:w-auto overflow-x-auto hide-scrollbar">
+          <div className="flex flex-[3] items-center gap-3 w-full lg:w-auto hide-scrollbar">
+            {/* NEW FOLDER DROPDOWN */}
+            <FolderDropdown />
+
+            <div className="w-px h-8 bg-slate-200/50 mx-2 hidden lg:block" />
+
             {dynamicTags.map((cat) => {
               const isActive = filter === cat;
               let baseColors = 'bg-white text-slate-400 hover:bg-slate-50';
@@ -118,9 +201,6 @@ const NotesOverview = () => {
               );
             })}
 
-            <button className="p-4 bg-white/50 backdrop-blur-xl border-none rounded-2xl text-slate-400 hover:bg-white hover:text-slate-600 shadow-[0_8px_20px_rgba(0,0,0,0.03)] transition-all shrink-0">
-              <Filter size={20} />
-            </button>
           </div>
         </div>
       </header>

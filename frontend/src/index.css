@@ -23,7 +23,9 @@
   --text-main: var(--text-dark);
   --text-muted: var(--subtext);
   --accent: var(--accent-yellow);
-  --border: rgba(0,0,0,0.05);
+  --border: rgba(226, 232, 240, 0.5);
+  --sidebar-bg: #F8FAFC;
+  --indigo-glow: 0 0 25px rgba(99, 102, 241, 0.2);
 
   /* Note Card Colors - High Vibrancy */
   --note-yellow: #FEF3C7;
@@ -156,6 +158,15 @@ html {
     border-radius: 50%;
   }
 
+  @media (max-width: 768px) {
+    .bg-blob-left {
+      width: 300px;
+      height: 300px;
+      bottom: -100px;
+      left: -50px;
+    }
+  }
+
   .bg-blob-right {
     position: absolute;
     width: 600px;
@@ -166,6 +177,15 @@ html {
     filter: blur(100px);
     opacity: 0.6;
     border-radius: 50%;
+  }
+
+  @media (max-width: 768px) {
+    .bg-blob-right {
+      width: 300px;
+      height: 300px;
+      bottom: -80px;
+      right: -50px;
+    }
   }
 
   .bg-dots {
@@ -207,6 +227,15 @@ html {
 
   .wave svg {
     height: 280px !important;
+  }
+
+  @media (max-width: 768px) {
+    .wave-container {
+      height: 200px;
+    }
+    .wave svg {
+      height: 180px !important;
+    }
   }
 
   @keyframes floatWave {
@@ -324,17 +353,23 @@ html {
   .theme-yellow {
     background: #FEF3C7 !important;
     --fold-color: linear-gradient(135deg, #FFFBEB 0%, #FDE68A 100%);
-    border: 1px solid rgba(253, 230, 138, 0.3) !important;
+    border: 1px solid rgba(253, 230, 138, 0.4) !important;
   }
 
   .theme-blue {
     background: #DBEAFE !important;
     --fold-color: linear-gradient(135deg, #EFF6FF 0%, #BFDBFE 100%);
-    border: 1px solid rgba(191, 219, 254, 0.3) !important;
+    border: 1px solid rgba(191, 219, 254, 0.4) !important;
+  }
+
+  .theme-pink {
+    background: #FCE7F3 !important;
+    --fold-color: linear-gradient(135deg, #FDF2F8 0%, #F9A8D4 100%);
+    border: 1px solid rgba(244, 114, 182, 0.3) !important;
   }
 
   .theme-orange {
-    background: #FED7AA !important;
+    background: #FFEDD5 !important;
     --fold-color: linear-gradient(135deg, #FFF7ED 0%, #FDBA74 100%);
     border: 1px solid rgba(253, 186, 116, 0.3) !important;
   }

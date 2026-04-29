@@ -1,11 +1,15 @@
 const User = require('../models/User');
 const webpush = require('web-push');
 
-webpush.setVapidDetails(
-  process.env.VAPID_EMAIL || 'mailto:support@mom-sanctuary.com',
-  process.env.VAPID_PUBLIC_KEY,
-  process.env.VAPID_PRIVATE_KEY
-);
+if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(
+    process.env.VAPID_EMAIL || 'mailto:support@mom-sanctuary.com',
+    process.env.VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
+  );
+} else {
+  console.warn('⚠️ Web Push VAPID keys are missing. Push notifications will be disabled.');
+}
 
 exports.subscribe = async (req, res) => {
   try {

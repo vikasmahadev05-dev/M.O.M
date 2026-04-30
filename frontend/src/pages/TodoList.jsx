@@ -7,7 +7,10 @@ import {
   Sparkles,
   LayoutGrid,
   X,
-  Palette
+  Palette,
+  Layers,
+  ChevronDown,
+  Trash2
 } from 'lucide-react';
 import { 
   fetchTasks, 
@@ -59,10 +62,10 @@ const CategoryManager = ({ isOpen, onClose, categories, onAdd, onDelete }) => {
       <motion.div 
         initial={{ scale: 0.9, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
-        className="relative w-full max-w-md bg-white rounded-[3rem] shadow-2xl p-8 space-y-8"
+        className="relative w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl p-8 space-y-8"
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-black text-slate-900 tracking-tighter">Custom Categories</h2>
+          <h2 className="text-2xl font-black text-slate-900 tracking-tighter">Collections</h2>
           <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-all">
             <X size={20} />
           </button>
@@ -72,14 +75,14 @@ const CategoryManager = ({ isOpen, onClose, categories, onAdd, onDelete }) => {
           <div className="flex gap-3">
             <input 
               type="text" 
-              placeholder="Category name..."
-              className="flex-1 px-6 py-4 bg-slate-100 rounded-2xl text-sm font-bold border-none focus:ring-2 focus:ring-slate-200 outline-none"
+              placeholder="Name..."
+              className="flex-1 px-6 py-4 bg-slate-50 rounded-2xl text-sm font-bold border-none focus:ring-2 focus:ring-slate-200 outline-none"
               value={newName}
               onChange={e => setNewName(e.target.value)}
             />
             <input 
               type="color"
-              className="w-14 h-14 p-1 bg-slate-100 rounded-2xl border-none cursor-pointer"
+              className="w-14 h-14 p-1 bg-slate-50 rounded-2xl border-none cursor-pointer"
               value={newColor}
               onChange={e => setNewColor(e.target.value)}
             />
@@ -91,15 +94,15 @@ const CategoryManager = ({ isOpen, onClose, categories, onAdd, onDelete }) => {
                 setNewName('');
               }
             }}
-            className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-slate-800 transition-all"
+            className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all"
           >
-            Create Category
+            Create New
           </button>
         </div>
 
         <div className="space-y-3 max-h-60 overflow-y-auto no-scrollbar">
           {categories.map(cat => (
-            <div key={cat._id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl group">
+            <div key={cat._id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color }} />
                 <span className="text-sm font-bold text-slate-700">{cat.name}</span>
@@ -108,7 +111,7 @@ const CategoryManager = ({ isOpen, onClose, categories, onAdd, onDelete }) => {
                 onClick={() => onDelete(cat._id)}
                 className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
               >
-                <X size={16} />
+                <Trash2 size={16} />
               </button>
             </div>
           ))}
@@ -129,31 +132,17 @@ const TodoList = () => {
   const [editingTask, setEditingTask] = useState(null);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState([]);
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
   useEffect(() => {
     dispatch(fetchTasks());
     dispatch(fetchTaskCategories());
   }, [dispatch]);
-
-  // Derived data
-  const categoryStats = useMemo(() => {
-    const counts = tasks.reduce((acc, task) => {
-      acc[task.category] = (acc[task.category] || 0) + 1;
-      return acc;
-    }, {});
-    
-    return categories.map(cat => ({
-      ...cat,
-      count: counts[cat.name] || 0
-    }));
-  }, [tasks, categories]);
 
   const filteredTasks = useMemo(() => {
     return tasks.filter(task => {
@@ -162,7 +151,7 @@ const TodoList = () => {
                              (activeCategory === 'today' && task.dueDate && new Date(task.dueDate).toDateString() === new Date().toDateString()) ||
                              (activeCategory === 'upcoming' && task.dueDate && new Date(task.dueDate) > new Date()) ||
                              (activeCategory === 'overdue' && isOverdue) ||
-                             task.category === activeCategory;
+                             (task.category && task.category.toLowerCase() === activeCategory.toLowerCase());
       return matchesCategory;
     }).sort((a, b) => {
       if (sortBy === 'newest') return new Date(b.createdAt) - new Date(a.createdAt);
@@ -194,20 +183,27 @@ const TodoList = () => {
 
   const handleSelect = (id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
 
-  const handleSaveTask = (taskData) => {
-    if (editingTask) {
-      dispatch(updateTask({ id: editingTask._id, taskData }));
-      toast.success('Objective refined');
-    } else {
-      dispatch(addTask(taskData));
-      toast.success('New Objective created');
+  const handleSaveTask = async (taskData) => {
+    try {
+      if (editingTask) {
+        await dispatch(updateTask({ id: editingTask._id, taskData })).unwrap();
+        toast.success('Objective refined');
+      } else {
+        await dispatch(addTask(taskData)).unwrap();
+        toast.success('New Objective created');
+      }
+      setEditingTask(null);
+      setIsModalOpen(false);
+      dispatch(fetchTasks());
+    } catch (error) {
+      console.error('Failed to save task:', error);
+      toast.error(`Save failed: ${error || 'Unknown error'}`);
     }
-    setEditingTask(null);
   };
 
   const handleToggle = (id) => dispatch(toggleTask(id));
   const handleDelete = (id) => {
-    if (window.confirm('Clear this objective?')) {
+    if (window.confirm('Delete this objective?')) {
       dispatch(deleteTask(id));
       toast.error('Objective cleared');
     }
@@ -215,117 +211,148 @@ const TodoList = () => {
   const handleUpdate = (id, data) => dispatch(updateTask({ id, taskData: data }));
 
   return (
-    <div className="max-w-6xl mx-auto px-4 md:px-6 pb-32 animate-in fade-in duration-1000 space-y-8 md:space-y-12">
-      {/* Refined Minimalist Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 pt-4">
-        <div className="flex items-center gap-5">
-          <div className="p-4 bg-orange-100/50 rounded-3xl text-orange-600 border border-white">
-            <Sparkles size={32} strokeWidth={2.5} />
+    <>
+      <div className="max-w-4xl mx-auto px-4 md:px-6 pb-40 space-y-8 md:space-y-12 animate-in fade-in duration-1000">
+        <header className="flex flex-col md:flex-row items-center justify-between gap-6 pt-6 md:pt-8">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-slate-900 rounded-2xl text-white shadow-xl">
+              <Sparkles size={24} />
+            </div>
+            <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tighter">Objectives</h1>
           </div>
-          <div>
-            <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter leading-none">Objectives</h1>
-            <p className="text-slate-400 font-bold uppercase text-[9px] tracking-[0.4em] mt-3 px-1 flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-orange-400" />
-              Minimalist Workflow
-            </p>
-          </div>
-        </div>
 
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            <button 
+              onClick={() => dispatch(fetchTasks())}
+              className="flex-1 md:flex-none p-4 bg-white border border-slate-100 text-slate-400 rounded-2xl hover:bg-slate-50 transition-all group"
+              title="Refresh Database"
+            >
+              <ArrowUpDown size={18} className="mx-auto group-hover:rotate-180 transition-transform duration-500" />
+            </button>
+            
+            {/* Desktop Add Button */}
+            <button 
+              onClick={() => { setEditingTask(null); setIsModalOpen(true); }}
+              className="hidden md:flex items-center gap-3 px-8 py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-[1.02] transition-all shadow-xl shadow-slate-200"
+            >
+              <Plus size={18} strokeWidth={3} />
+              Add New
+            </button>
+          </div>
+        </header>
+
+        {/* Mobile FAB */}
         <button 
           onClick={() => { setEditingTask(null); setIsModalOpen(true); }}
-          className="flex items-center justify-center gap-4 px-10 py-6 bg-slate-900 text-white rounded-[2.5rem] shadow-2xl shadow-slate-900/20 hover:scale-[1.02] active:scale-95 transition-all group w-full md:w-auto"
+          className="md:hidden fixed bottom-8 right-6 z-[900] w-16 h-16 bg-slate-900 text-white rounded-full flex items-center justify-center shadow-2xl shadow-slate-900/40 hover:scale-110 active:scale-95 transition-all"
         >
-          <div className="p-1.5 bg-white/20 rounded-xl group-hover:rotate-90 transition-all duration-500">
-            <Plus size={24} strokeWidth={3} />
-          </div>
-          <span className="font-black text-sm uppercase tracking-widest">New Objective</span>
+          <Plus size={28} strokeWidth={3} />
         </button>
-      </div>
 
-      {/* High-Fidelity Horizontal Controls */}
-      <div className="flex flex-col md:flex-row items-center gap-4 bg-white/40 backdrop-blur-3xl p-3 rounded-[3rem] border border-white shadow-2xl shadow-slate-200/30">
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar flex-1 w-full md:w-auto pb-1 md:pb-0">
-          <div className="flex p-1.5 bg-white/50 backdrop-blur-xl rounded-[2.5rem] border border-white shadow-sm shrink-0">
-            {['all', 'today', 'upcoming', 'overdue'].map(f => (
+        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 bg-white border border-slate-100 p-2 rounded-[2rem] shadow-xl shadow-slate-200/50 overflow-hidden">
+          <div className="flex bg-slate-50 p-1 rounded-full overflow-x-auto no-scrollbar shrink-0">
+            {['all', 'today', 'upcoming'].map(f => (
               <button
                 key={f}
                 onClick={() => setActiveCategory(f)}
-                className={`px-8 py-3 rounded-[2rem] text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
-                  activeCategory === f 
-                    ? 'bg-slate-900 text-white shadow-xl shadow-slate-400/40' 
-                    : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
+                className={`whitespace-nowrap px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
+                  activeCategory === f ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'
                 }`}
               >
                 {f}
               </button>
             ))}
           </div>
-          
-          <div className="h-10 w-px bg-slate-200/50 mx-2 shrink-0" />
 
-          <div className="flex gap-2 items-center">
-            {categoryStats.map(cat => (
-              <button
-                key={cat._id}
-                onClick={() => setActiveCategory(cat.name)}
-                className={`flex items-center gap-3 px-6 py-4 rounded-[2rem] text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border border-white shadow-sm ${
-                  activeCategory === cat.name 
-                    ? 'bg-white text-slate-900 ring-4 ring-slate-100' 
-                    : 'bg-white/30 text-slate-400 hover:bg-white hover:text-slate-600'
-                }`}
-              >
-                <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: cat.color }} />
-                {cat.name}
-                <span className="opacity-30 ml-1 font-bold">{cat.count}</span>
-              </button>
-            ))}
+          <div className="h-6 w-px bg-slate-100 hidden md:block" />
+
+          <div className="relative flex-1 w-full md:w-auto">
             <button 
-              onClick={() => setIsCategoryModalOpen(true)}
-              className="p-4 bg-slate-100/50 border border-white rounded-full text-slate-400 hover:bg-slate-900 hover:text-white transition-all shadow-sm"
-              title="Manage Categories"
+              onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
+              className="w-full flex items-center justify-between px-6 py-3 bg-white hover:bg-slate-50 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-500 transition-all border border-transparent hover:border-slate-100"
             >
-              <Palette size={16} />
+              <div className="flex items-center gap-3">
+                <Layers size={14} className="text-slate-400" />
+                <span>{categories.find(c => c.name === activeCategory)?.name || 'Collections'}</span>
+              </div>
+              <ChevronDown size={14} className={`transition-transform ${isCategoryDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
+
+            <AnimatePresence>
+              {isCategoryDropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setIsCategoryDropdownOpen(false)} />
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className="absolute top-full left-0 right-0 mt-2 z-50 bg-white border border-slate-100 rounded-3xl shadow-2xl p-2 overflow-hidden"
+                  >
+                    <button 
+                      onClick={() => { setActiveCategory('all'); setIsCategoryDropdownOpen(false); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500"
+                    >
+                      All Collections
+                    </button>
+                    {categories.map(cat => (
+                      <button
+                        key={cat._id}
+                        onClick={() => { setActiveCategory(cat.name); setIsCategoryDropdownOpen(false); }}
+                        className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
+                          {cat.name}
+                        </div>
+                        <span className="opacity-30">{tasks.filter(t => t.category === cat.name).length}</span>
+                      </button>
+                    ))}
+                    <div className="h-px bg-slate-50 my-2" />
+                    <button 
+                      onClick={() => { setIsCategoryModalOpen(true); setIsCategoryDropdownOpen(false); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 rounded-2xl text-[10px] font-black uppercase tracking-widest text-orange-500"
+                    >
+                      <Palette size={14} />
+                      Customize
+                    </button>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div className="h-6 w-px bg-slate-100 hidden md:block" />
+
+          <div className="relative shrink-0 w-full md:w-auto">
+            <ArrowUpDown className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+            <select 
+              className="pl-12 pr-8 py-3 bg-white border-none rounded-full text-[10px] font-black uppercase tracking-widest text-slate-500 outline-none appearance-none cursor-pointer w-full"
+              value={sortBy}
+              onChange={e => setSortBy(e.target.value)}
+            >
+              <option value="order">Custom</option>
+              <option value="newest">Recent</option>
+              <option value="priority">Priority</option>
+              <option value="dueDate">Due Date</option>
+            </select>
           </div>
         </div>
 
-        <div className="h-10 w-px bg-slate-200 hidden md:block" />
-        <div className="relative w-full md:w-auto">
-          <ArrowUpDown className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} strokeWidth={3} />
-          <select 
-            className="w-full md:w-44 pl-12 pr-8 py-5 bg-white border-none rounded-[2.5rem] text-[10px] font-black uppercase tracking-widest text-slate-500 outline-none appearance-none cursor-pointer hover:bg-white transition-all shadow-sm"
-            value={sortBy}
-            onChange={e => setSortBy(e.target.value)}
-          >
-            <option value="order">Custom Flow</option>
-            <option value="newest">Recent</option>
-            <option value="priority">Priority</option>
-            <option value="dueDate">Deadlines</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Main Content Feed */}
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <div className="space-y-10">
-          <section className="space-y-6">
-            <div className="flex items-center justify-between px-6">
-              <div className="flex items-center gap-4">
-                <LayoutGrid size={18} className="text-slate-300" />
-                <h3 className="text-[11px] font-black text-slate-300 uppercase tracking-[0.4em]">Active Journey</h3>
-              </div>
-              <div className="h-px flex-1 bg-slate-100 mx-8" />
-              <span className="text-[10px] font-black text-orange-500 bg-orange-50/50 border border-orange-100 px-5 py-2.5 rounded-full uppercase tracking-widest">
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <div className="space-y-6">
+            <div className="flex items-center justify-between px-4">
+              <h3 className="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em]">Objectives Feed</h3>
+              <span className="text-[10px] font-black text-slate-400 bg-slate-50 px-4 py-2 rounded-full uppercase tracking-widest">
                 {filteredTasks.length} Visible
               </span>
             </div>
 
-            <div className="grid gap-6">
+            <div className="grid gap-4">
               <SortableContext items={filteredTasks.map(t => t._id)} strategy={verticalListSortingStrategy}>
                 <AnimatePresence mode="popLayout">
                   {loading ? (
-                    Array.from({ length: 4 }).map((_, i) => (
-                      <div key={i} className="h-32 w-full bg-white/40 rounded-[3rem] animate-pulse border border-white" />
+                    Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className="h-24 w-full bg-slate-50 rounded-3xl animate-pulse" />
                     ))
                   ) : filteredTasks.length > 0 ? (
                     filteredTasks.map(task => (
@@ -341,23 +368,42 @@ const TodoList = () => {
                       />
                     ))
                   ) : (
-                    <motion.div 
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="py-40 flex flex-col items-center justify-center space-y-10 bg-white/30 backdrop-blur-sm rounded-[5rem] border-2 border-dashed border-white/50 shadow-inner"
-                    >
-                      <div className="p-10 bg-white rounded-[3rem] shadow-2xl shadow-slate-200/50">
-                        <Sparkles size={64} className="text-orange-200 animate-pulse" />
+                    <div className="py-20 flex flex-col items-center justify-center space-y-6 bg-slate-50/50 rounded-[3rem] border-2 border-dashed border-slate-100">
+                      <Sparkles size={40} className="text-slate-200" />
+                      <div className="text-center">
+                        <p className="text-slate-400 text-xs font-black uppercase tracking-widest">Horizon is clear in this view</p>
+                        {activeCategory !== 'all' && (
+                          <button 
+                            onClick={() => setActiveCategory('all')}
+                            className="mt-4 text-[10px] font-black text-orange-500 uppercase tracking-widest hover:underline"
+                          >
+                            Show all objectives instead?
+                          </button>
+                        )}
                       </div>
-                      <p className="text-slate-900 font-black uppercase tracking-[0.3em] text-2xl">Total Sanctuary</p>
-                    </motion.div>
+                    </div>
                   )}
                 </AnimatePresence>
               </SortableContext>
             </div>
-          </section>
-        </div>
-      </DndContext>
+          </div>
+        </DndContext>
+
+        <BulkActionBar 
+          selectedCount={selectedIds.length}
+          onClear={() => setSelectedIds([])}
+          onDelete={() => {
+            if (window.confirm(`Clear ${selectedIds.length} objectives?`)) {
+              dispatch(batchDeleteTasks(selectedIds));
+              setSelectedIds([]);
+            }
+          }}
+          onStatusToggle={(status) => {
+            dispatch(batchUpdateTasks({ ids: selectedIds, updates: { status } }));
+            setSelectedIds([]);
+          }}
+        />
+      </div>
 
       <CategoryManager 
         isOpen={isCategoryModalOpen}
@@ -365,24 +411,9 @@ const TodoList = () => {
         categories={categories}
         onAdd={(data) => dispatch(addTaskCategory(data))}
         onDelete={(id) => {
-          if (window.confirm('Delete category? Tasks will remain in your list.')) {
+          if (window.confirm('Delete collection?')) {
             dispatch(deleteTaskCategory(id));
           }
-        }}
-      />
-
-      <BulkActionBar 
-        selectedCount={selectedIds.length}
-        onClear={() => setSelectedIds([])}
-        onDelete={() => {
-          if (window.confirm(`Clear ${selectedIds.length} objectives?`)) {
-            dispatch(batchDeleteTasks(selectedIds));
-            setSelectedIds([]);
-          }
-        }}
-        onStatusToggle={(status) => {
-          dispatch(batchUpdateTasks({ ids: selectedIds, updates: { status } }));
-          setSelectedIds([]);
         }}
       />
 
@@ -391,8 +422,9 @@ const TodoList = () => {
         onClose={() => { setIsModalOpen(false); setEditingTask(null); }}
         onSave={handleSaveTask}
         initialTask={editingTask}
+        defaultCategory={activeCategory}
       />
-    </div>
+    </>
   );
 };
 

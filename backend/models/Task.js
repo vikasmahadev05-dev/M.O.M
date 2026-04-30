@@ -74,11 +74,10 @@ const taskSchema = new mongoose.Schema({
 });
 
 // Auto-populate completedAt when status changes to completed
-taskSchema.pre('save', function(next) {
+taskSchema.pre('save', function() {
   if (this.isModified('status') && this.status === 'completed' && !this.completedAt) {
     this.completedAt = new Date();
   }
-  next();
 });
 
 module.exports = mongoose.model('Task', taskSchema);

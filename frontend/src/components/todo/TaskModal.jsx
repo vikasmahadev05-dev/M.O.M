@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { useSelector } from 'react-redux';
 
-const TaskModal = ({ isOpen, onClose, onSave, initialTask = null }) => {
+const TaskModal = ({ isOpen, onClose, onSave, initialTask = null, defaultCategory = 'all' }) => {
   const { list: categories } = useSelector(state => state.taskCategories);
   
   const [taskData, setTaskData] = useState({
@@ -34,29 +34,51 @@ const TaskModal = ({ isOpen, onClose, onSave, initialTask = null }) => {
   const [newTag, setNewTag] = useState('');
 
   useEffect(() => {
-    if (initialTask) {
-      setTaskData({
-        ...initialTask,
-        dueDate: initialTask.dueDate ? initialTask.dueDate.split('T')[0] : ''
-      });
-    } else {
-      setTaskData({
-        title: '',
-        description: '',
-        priority: 'Medium',
-        category: categories.length > 0 ? categories[0].name : 'Personal',
-        tags: [],
-        subtasks: [],
-        dueDate: '',
-        recurrence: 'none',
-        color: '#ffffff'
-      });
+    if (isOpen) {
+      if (initialTask) {
+        setTaskData({
+          ...initialTask,
+          dueDate: initialTask.dueDate ? initialTask.dueDate.split('T')[0] : ''
+        });
+      } else {
+        // Inherit current view properties
+        let initialCategory = 'Personal';
+        let initialDueDate = '';
+
+        // If we are in a specific category view
+        const isValidCategory = categories.some(c => c.name === defaultCategory);
+        if (isValidCategory) {
+          initialCategory = defaultCategory;
+        } else if (categories.length > 0) {
+          initialCategory = categories[0].name;
+        }
+
+        // If we are in the "Today" smart view
+        if (defaultCategory === 'today') {
+          initialDueDate = new Date().toISOString().split('T')[0];
+        }
+
+        setTaskData({
+          title: '',
+          description: '',
+          priority: 'Medium',
+          category: initialCategory,
+          tags: [],
+          subtasks: [],
+          dueDate: initialDueDate,
+          recurrence: 'none',
+          color: '#ffffff'
+        });
+      }
     }
-  }, [initialTask, isOpen, categories]);
+  }, [isOpen, initialTask, categories, defaultCategory]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!taskData.title.trim()) return;
+    if (!taskData.title.trim()) {
+      toast.error('Title is required');
+      return;
+    }
     onSave(taskData);
     onClose();
   };
@@ -83,21 +105,26 @@ const TaskModal = ({ isOpen, onClose, onSave, initialTask = null }) => {
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-[1000] flex items-end md:items-center justify-center">
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[-1]"
         />
         
         <motion.div 
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          className="relative w-full max-w-2xl bg-white/90 backdrop-blur-2xl rounded-[3rem] border border-white shadow-2xl shadow-slate-900/20 overflow-hidden max-h-[90vh] flex flex-col"
+          initial={{ y: "100%", opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: "100%", opacity: 0 }}
+          transition={{ type: "spring", damping: 25, stiffness: 300 }}
+          className="relative w-full max-w-2xl bg-white rounded-t-[2.5rem] md:rounded-[2rem] shadow-2xl overflow-hidden max-h-[95vh] md:max-h-[90vh] flex flex-col"
         >
+          {/* Mobile Handle */}
+          <div className="flex justify-center pt-4 md:hidden">
+            <div className="w-12 h-1.5 bg-slate-100 rounded-full" />
+          </div>
           {/* Modal Header */}
           <div className="p-8 pb-0 flex items-center justify-between">
             <h2 className="text-2xl font-black text-slate-800 tracking-tight">
